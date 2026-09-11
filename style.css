@@ -1,0 +1,1712 @@
+﻿body {
+    background-color: #f8faf8;
+    color: #26332b;
+    font-family: Arial, sans-serif;
+}
+
+
+/* Navbar */
+
+.navbar-brand {
+    font-size: 1.4rem;
+}
+
+.nav-link {
+    font-weight: 500;
+}
+
+
+/* Hero */
+
+.hero-section {
+    padding: 100px 20px;
+    background: linear-gradient( 135deg, #e8f5ed, #ffffff );
+}
+
+.hero-icon {
+    font-size: 65px;
+    margin-bottom: 20px;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+}
+
+.hero-section h2 {
+    color: #198754;
+    font-weight: bold;
+}
+
+.hero-section p {
+    max-width: 850px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 2;
+}
+
+
+/* People */
+
+.person-card {
+    background-color: white;
+    padding: 30px;
+    text-align: center;
+    border-radius: 20px;
+    height: 100%;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    transition: 0.3s;
+}
+
+    .person-card:hover {
+        transform: translateY(-5px);
+    }
+
+.person-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.person-card h3 {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.person-card p {
+    color: #6c757d;
+    margin-top: 10px;
+}
+
+
+/* Services */
+
+.services-section {
+    background-color: #eef7f1;
+}
+
+.service-card {
+    background-color: white;
+    padding: 35px 25px;
+    text-align: center;
+    border-radius: 20px;
+    height: 100%;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    transition: 0.3s;
+}
+
+    .service-card:hover {
+        transform: translateY(-7px);
+    }
+
+.service-icon {
+    font-size: 55px;
+    margin-bottom: 15px;
+}
+
+.service-card h3 {
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.service-card p {
+    color: #6c757d;
+    min-height: 55px;
+    line-height: 1.8;
+}
+
+
+/* Final Dua */
+
+.final-dua {
+    max-width: 850px;
+    margin: auto;
+    background-color: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+    .final-dua p {
+        font-size: 1.2rem;
+        line-height: 2.2;
+    }
+
+
+/* Footer */
+
+footer {
+    background-color: #183c2a;
+    color: white;
+}
+
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .hero-section {
+        padding: 70px 20px;
+    }
+
+        .hero-section h1 {
+            font-size: 2.2rem;
+        }
+
+        .hero-section h2 {
+            font-size: 1.5rem;
+        }
+
+    .person-card h3 {
+        font-size: 1.1rem;
+    }
+}
+/*Quran Page*/
+.quran-control-card {
+    background-color: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+.quran-card {
+    background-color: #fffdf7;
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+.ayah {
+    position: relative;
+    padding: 25px 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+
+    .ayah:last-child {
+        border-bottom: none;
+    }
+
+
+.ayah-number {
+    width: 38px;
+    height: 38px;
+    margin: 0 auto 15px auto;
+    border-radius: 50%;
+    background-color: #198754;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+
+.ayah-text {
+    font-family: "Traditional Arabic", "Amiri", serif;
+    font-size: 30px;
+    line-height: 2.3;
+    text-align: center;
+    color: #26332b;
+}
+
+
+.audio-card {
+    background-color: white;
+    max-width: 800px;
+    margin: auto;
+    padding: 45px 30px;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+.audio-icon {
+    font-size: 65px;
+    margin-bottom: 20px;
+}
+
+
+.audio-card audio {
+    height: 50px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .quran-card {
+        padding: 20px;
+    }
+
+
+    .ayah-text {
+        font-size: 24px;
+        line-height: 2.2;
+    }
+
+
+    .audio-card {
+        padding: 30px 20px;
+    }
+}
+/* =========================================
+   QURAN PAGE
+   ========================================= */
+
+.quran-hero {
+    background: linear-gradient(
+        135deg,
+        #eaf7ef,
+        #ffffff
+    );
+    border-bottom: 1px solid #dfeee4;
+}
+
+
+/* =========================================
+   Quran Controls
+   ========================================= */
+
+.quran-control-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+    border: 1px solid #e7eee9;
+}
+
+
+/* =========================================
+   Surah Information
+   ========================================= */
+
+.surah-title-box {
+    background: #f8fbf9;
+    border-radius: 18px;
+    padding: 20px;
+    border: 1px solid #e1eee5;
+}
+
+.surah-title-box h2 {
+    color: #198754;
+}
+
+
+/* =========================================
+   Mushaf Page
+   ========================================= */
+
+#mushafPageContainer {
+    display: flex;
+    justify-content: center;
+}
+
+
+.mushaf-page {
+    width: 100%;
+    max-width: 850px;
+
+    min-height: 1050px;
+
+    background: #fffdf7;
+
+    border: 8px solid #e5d8b5;
+
+    border-radius: 6px;
+
+    padding: 45px 55px;
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.15);
+
+    position: relative;
+}
+
+
+/* =========================================
+   Page Header
+   ========================================= */
+
+.mushaf-page-header {
+    display: flex;
+    justify-content: space-between;
+
+    color: #6b5b35;
+
+    font-size: 14px;
+
+    border-bottom: 1px solid #d8c99f;
+
+    padding-bottom: 12px;
+
+    margin-bottom: 35px;
+}
+
+
+/* =========================================
+   Mushaf Content
+   ========================================= */
+
+.mushaf-content {
+    text-align: justify;
+
+    direction: rtl;
+
+    font-family:
+        "Traditional Arabic",
+        "Amiri",
+        "Noto Naskh Arabic",
+        serif;
+
+    font-size: 30px;
+
+    line-height: 2.35;
+
+    color: #171717;
+}
+
+
+/* =========================================
+   Bismillah
+   ========================================= */
+
+.bismillah {
+    text-align: center;
+
+    font-size: 32px;
+
+    margin-bottom: 30px;
+
+    font-weight: bold;
+
+    color: #222;
+}
+
+
+/* =========================================
+   Ayah
+   ========================================= */
+
+.mushaf-ayah {
+    display: inline;
+
+    cursor: default;
+}
+
+
+/* =========================================
+   Ayah Number
+   ========================================= */
+
+.ayah-number-circle {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 35px;
+    height: 35px;
+
+    margin: 0 5px;
+
+    border: 1px solid #8a7442;
+
+    border-radius: 50%;
+
+    font-family:
+        "Traditional Arabic",
+        serif;
+
+    font-size: 18px;
+
+    color: #6b5b35;
+
+    vertical-align: middle;
+}
+
+
+/* =========================================
+   Page Footer
+   ========================================= */
+
+.mushaf-page-footer {
+    position: absolute;
+
+    bottom: 15px;
+
+    left: 0;
+    right: 0;
+
+    text-align: center;
+
+    color: #806f43;
+
+    font-size: 14px;
+}
+
+
+/* =========================================
+   Page Navigation
+   ========================================= */
+
+#pageNavigation {
+    flex-wrap: wrap;
+}
+
+
+#pageNumber {
+    min-width: 120px;
+    text-align: center;
+}
+
+
+/* =========================================
+   Audio Main Card
+   ========================================= */
+
+.audio-main-card {
+    background: #ffffff;
+
+    border-radius: 20px;
+
+    padding: 30px;
+
+    box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.07);
+
+    border: 1px solid #e5eee8;
+}
+
+
+.audio-big-icon {
+    font-size: 50px;
+    margin-bottom: 10px;
+}
+
+
+/* =========================================
+   Current Ayah
+   ========================================= */
+
+.current-ayah-box {
+    background: #f8fbf9;
+
+    border-radius: 15px;
+
+    padding: 20px;
+
+    margin-top: 20px;
+
+    border-right: 5px solid #198754;
+}
+
+
+.current-ayah-text {
+    font-family:
+        "Traditional Arabic",
+        "Amiri",
+        "Noto Naskh Arabic",
+        serif;
+
+    font-size: 27px;
+
+    line-height: 2;
+
+    text-align: center;
+}
+
+
+/* =========================================
+   Audio Ayah Cards
+   ========================================= */
+
+.audio-ayah-card {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 15px;
+
+    background: #ffffff;
+
+    border-radius: 15px;
+
+    padding: 20px;
+
+    margin-bottom: 15px;
+
+    border: 1px solid #e5eee8;
+
+    box-shadow:
+        0 3px 12px rgba(0, 0, 0, 0.05);
+}
+
+
+.audio-ayah-number {
+    min-width: 42px;
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #198754;
+
+    color: white;
+
+    font-weight: bold;
+}
+
+
+.audio-ayah-content {
+    flex: 1;
+}
+
+
+.audio-ayah-text {
+    font-family:
+        "Traditional Arabic",
+        "Amiri",
+        "Noto Naskh Arabic",
+        serif;
+
+    font-size: 25px;
+
+    line-height: 2;
+
+    color: #222;
+}
+
+
+/* =========================================
+   Audio Player
+   ========================================= */
+
+.audio-main-card audio {
+    border-radius: 10px;
+}
+
+
+/* =========================================
+   Mobile
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    .mushaf-page {
+
+        min-height: 750px;
+
+        padding: 30px 20px;
+
+        border-width: 5px;
+
+    }
+
+
+    .mushaf-content {
+
+        font-size: 23px;
+
+        line-height: 2.2;
+
+    }
+
+
+    .bismillah {
+
+        font-size: 26px;
+
+    }
+
+
+    .ayah-number-circle {
+
+        width: 29px;
+        height: 29px;
+
+        font-size: 15px;
+
+    }
+
+
+    .audio-ayah-card {
+
+        padding: 15px;
+
+    }
+
+
+    .audio-ayah-text {
+
+        font-size: 21px;
+
+    }
+
+
+    .current-ayah-text {
+
+        font-size: 22px;
+
+    }
+
+
+    .audio-main-card {
+
+        padding: 20px;
+
+    }
+
+
+    #pageNavigation button {
+
+        font-size: 14px;
+
+    }
+
+}
+
+/* ===============================
+   Azkar Page
+================================ */
+
+.azkar-hero {
+    background: linear-gradient(
+        135deg,
+        #f1f8f4,
+        #ffffff
+    );
+
+    border-bottom: 1px solid #e5e5e5;
+}
+
+
+.azkar-icon {
+    font-size: 55px;
+    margin-bottom: 15px;
+}
+
+
+/* ===============================
+   Categories
+================================ */
+
+.azkar-categories {
+
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+}
+
+
+.azkar-categories .btn {
+
+    min-width: 150px;
+
+}
+
+
+/* ===============================
+   Progress
+================================ */
+
+.azkar-progress-card {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.06);
+
+}
+
+
+/* ===============================
+   Azkar Card
+================================ */
+
+.azkar-card {
+
+    position: relative;
+
+    display: flex;
+
+    gap: 20px;
+
+    background: white;
+
+    padding: 25px;
+
+    margin-bottom: 20px;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.07);
+
+    transition: 0.2s;
+
+}
+
+
+.azkar-card:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.10);
+
+}
+
+
+/* ===============================
+   Number
+================================ */
+
+.azkar-number {
+
+    min-width: 45px;
+
+    height: 45px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #198754;
+
+    color: white;
+
+    border-radius: 50%;
+
+    font-weight: bold;
+
+    font-size: 18px;
+
+}
+
+
+/* ===============================
+   Content
+================================ */
+
+.azkar-content {
+
+    flex: 1;
+
+}
+
+
+.azkar-text {
+
+    font-size: 24px;
+
+    line-height: 2.2;
+
+    color: #333;
+
+}
+
+
+/* ===============================
+   Actions
+================================ */
+
+.azkar-actions {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    flex-wrap: wrap;
+
+}
+
+
+.azkar-count {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    color: #666;
+
+}
+
+
+.azkar-count strong {
+
+    background: #e9f7ef;
+
+    color: #198754;
+
+    padding: 5px 12px;
+
+    border-radius: 20px;
+
+}
+
+
+.azkar-counter-btn {
+
+    min-width: 150px;
+
+}
+
+
+/* ===============================
+   Mobile
+================================ */
+
+@media (max-width: 768px) {
+
+    .azkar-card {
+
+        padding: 20px;
+
+        gap: 12px;
+
+    }
+
+
+    .azkar-number {
+
+        min-width: 38px;
+
+        height: 38px;
+
+        font-size: 15px;
+
+    }
+
+
+    .azkar-text {
+
+        font-size: 20px;
+
+        line-height: 2;
+
+    }
+
+
+    .azkar-actions {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .azkar-counter-btn {
+
+        width: 100%;
+
+    }
+
+
+    .azkar-categories {
+
+        flex-direction: column;
+
+    }
+
+
+    .azkar-categories .btn {
+
+        width: 100%;
+
+    }
+
+}
+
+/* ===============================
+   Duas Page
+================================ */
+
+.duas-hero {
+
+    background: linear-gradient(
+        135deg,
+        #f1f8f4,
+        #ffffff
+    );
+
+    border-bottom: 1px solid #e5e5e5;
+
+}
+
+
+.duas-icon {
+
+    font-size: 55px;
+
+    margin-bottom: 15px;
+
+}
+
+
+/* ===============================
+   Categories
+================================ */
+
+.duas-categories {
+
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+}
+
+
+.duas-categories .btn {
+
+    min-width: 150px;
+
+}
+
+
+/* ===============================
+   Dua Card
+================================ */
+
+.dua-card {
+
+    display: flex;
+
+    gap: 20px;
+
+    background: white;
+
+    padding: 28px;
+
+    margin-bottom: 20px;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 5px 20px rgba(0, 0, 0, 0.07);
+
+    transition: 0.2s;
+
+}
+
+
+.dua-card:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 25px rgba(0, 0, 0, 0.10);
+
+}
+
+
+/* ===============================
+   Dua Number
+================================ */
+
+.dua-number {
+
+    min-width: 45px;
+
+    height: 45px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #198754;
+
+    color: white;
+
+    border-radius: 50%;
+
+    font-weight: bold;
+
+    font-size: 18px;
+
+}
+
+
+/* ===============================
+   Content
+================================ */
+
+.dua-content {
+
+    flex: 1;
+
+}
+
+
+.dua-text {
+
+    font-size: 24px;
+
+    line-height: 2.2;
+
+    color: #333;
+
+}
+
+
+/* ===============================
+   Actions
+================================ */
+
+.dua-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+}
+
+
+.copy-message {
+
+    font-size: 14px;
+
+}
+
+
+/* ===============================
+   Final Dua
+================================ */
+
+.dua-final-text {
+
+    font-size: 22px;
+
+    line-height: 2.2;
+
+}
+
+
+/* ===============================
+   Mobile
+================================ */
+
+@media (max-width: 768px) {
+
+    .dua-card {
+
+        padding: 20px;
+
+        gap: 12px;
+
+    }
+
+
+    .dua-number {
+
+        min-width: 38px;
+
+        height: 38px;
+
+        font-size: 15px;
+
+    }
+
+
+    .dua-text {
+
+        font-size: 20px;
+
+        line-height: 2;
+
+    }
+
+
+    .dua-actions {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .duas-categories {
+
+        flex-direction: column;
+
+    }
+
+
+    .duas-categories .btn {
+
+        width: 100%;
+
+    }
+
+
+    .dua-final-text {
+
+        font-size: 19px;
+
+    }
+
+}
+
+/* ===============================
+   Tasbeeh Page
+================================ */
+
+.tasbeeh-hero {
+
+    background: linear-gradient(
+        135deg,
+        #f1f8f4,
+        #ffffff
+    );
+
+    border-bottom: 1px solid #e5e5e5;
+
+}
+
+
+.tasbeeh-icon {
+
+    font-size: 55px;
+
+    margin-bottom: 15px;
+
+}
+
+
+/* ===============================
+   Main Card
+================================ */
+
+.tasbeeh-card {
+
+    max-width: 700px;
+
+    margin: auto;
+
+    background: white;
+
+    padding: 35px;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.08);
+
+}
+
+
+/* ===============================
+   Dhikr Box
+================================ */
+
+.tasbeeh-dhikr-box {
+
+    background: #f1f8f4;
+
+    border-radius: 18px;
+
+    padding: 25px;
+
+    text-align: center;
+
+}
+
+
+.tasbeeh-dhikr {
+
+    font-size: 30px;
+
+    font-weight: bold;
+
+    line-height: 1.8;
+
+}
+
+
+/* ===============================
+   Counter
+================================ */
+
+.tasbeeh-counter-area {
+
+    margin-top: 35px;
+
+}
+
+
+.tasbeeh-counter {
+
+    font-size: 80px;
+
+    font-weight: bold;
+
+    color: #198754;
+
+    line-height: 1.2;
+
+}
+
+
+/* ===============================
+   Main Button
+================================ */
+
+.tasbeeh-main-btn {
+
+    width: 190px;
+
+    height: 190px;
+
+    border-radius: 50%;
+
+    border: none;
+
+    background: #198754;
+
+    color: white;
+
+    font-size: 45px;
+
+    display: inline-flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    box-shadow:
+        0 10px 25px rgba(25, 135, 84, 0.25);
+
+    transition: 0.15s;
+
+}
+
+
+.tasbeeh-main-btn span {
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+}
+
+
+.tasbeeh-main-btn:hover {
+
+    transform: scale(1.03);
+
+}
+
+
+.tasbeeh-main-btn:active {
+
+    transform: scale(0.96);
+
+}
+
+
+.tasbeeh-main-btn:disabled {
+
+    opacity: 0.6;
+
+    cursor: not-allowed;
+
+}
+
+
+/* ===============================
+   Total
+================================ */
+
+.tasbeeh-total {
+
+    text-align: center;
+
+    padding: 18px;
+
+    background: #f8f9fa;
+
+    border-radius: 15px;
+
+}
+
+
+.tasbeeh-total #totalCounter {
+
+    font-size: 30px;
+
+    color: #198754;
+
+}
+
+
+/* ===============================
+   Mobile
+================================ */
+
+@media (max-width: 768px) {
+
+    .tasbeeh-card {
+
+        padding: 22px;
+
+    }
+
+
+    .tasbeeh-dhikr {
+
+        font-size: 25px;
+
+    }
+
+
+    .tasbeeh-counter {
+
+        font-size: 65px;
+
+    }
+
+
+    .tasbeeh-main-btn {
+
+        width: 165px;
+
+        height: 165px;
+
+        font-size: 38px;
+
+    }
+
+}
+/* =========================
+   RUQYAH PAGE
+========================= */
+
+.ruqyah-hero {
+    background: linear-gradient(135deg, #198754, #146c43);
+    color: white;
+    padding: 70px 20px;
+}
+
+.ruqyah-icon {
+    font-size: 65px;
+    margin-bottom: 15px;
+}
+
+.ruqyah-hero h1 {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.ruqyah-hero p {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+
+/* Intro */
+
+.ruqyah-intro {
+    background: #f8f9fa;
+    border-right: 5px solid #198754;
+    padding: 25px;
+    border-radius: 12px;
+    line-height: 2;
+}
+
+.ruqyah-intro h5 {
+    color: #198754;
+    font-weight: 700;
+}
+
+
+/* Section title */
+
+.section-title {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.section-title h2 {
+    font-weight: 700;
+    color: #198754;
+}
+
+.section-title p {
+    color: #6c757d;
+}
+
+
+/* Ruqyah cards */
+
+.ruqyah-card {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.06);
+}
+
+.ruqyah-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ruqyah-card-header span {
+    width: 38px;
+    height: 38px;
+    background: #198754;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.ruqyah-card-header h3 {
+    margin: 0;
+    color: #198754;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+
+/* Quran text */
+
+.ruqyah-text {
+    background: #fdfdfd;
+    border-radius: 12px;
+    padding: 25px;
+    line-height: 2.4;
+    font-size: 21px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.ruqyah-text p {
+    margin-bottom: 20px;
+}
+
+.ruqyah-text p:last-child {
+    margin-bottom: 0;
+}
+
+.ruqyah-text h5 {
+    color: #198754;
+    font-weight: 700;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+
+/* Copy button */
+
+.copy-btn {
+    min-width: 120px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .ruqyah-hero {
+        padding: 50px 15px;
+    }
+
+    .ruqyah-icon {
+        font-size: 50px;
+    }
+
+    .ruqyah-card {
+        padding: 18px;
+    }
+
+    .ruqyah-text {
+        font-size: 18px;
+        line-height: 2.2;
+        padding: 18px;
+    }
+
+    .ruqyah-card-header h3 {
+        font-size: 19px;
+    }
+
+}
+/* =========================
+   RUQYAH AUDIO
+========================= */
+
+.ruqyah-audio-card {
+    background: linear-gradient(135deg, #f8fffb, #eefaf4);
+    border: 1px solid #cfe8da;
+    border-radius: 18px;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.ruqyah-audio-icon {
+    width: 85px;
+    height: 85px;
+    min-width: 85px;
+    border-radius: 50%;
+    background: #198754;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+}
+
+.ruqyah-audio-content {
+    flex: 1;
+}
+
+.ruqyah-audio-label {
+    display: inline-block;
+    background: #d1e7dd;
+    color: #146c43;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.ruqyah-audio-content h3 {
+    color: #198754;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.ruqyah-audio-content p {
+    color: #6c757d;
+    margin-bottom: 18px;
+    line-height: 1.8;
+}
+
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .ruqyah-audio-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 25px 18px;
+    }
+
+    .ruqyah-audio-content {
+        width: 100%;
+    }
+
+    .ruqyah-audio-content .d-flex {
+        justify-content: center;
+    }
+
+}
+/* =========================
+   EMBEDDED RUQYAH PLAYER
+========================= */
+
+.ruqyah-embedded-player {
+    width: 100%;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #dcefe4;
+    margin-top: 20px;
+}
+
+.ruqyah-embedded-player iframe {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border: none;
+}
+
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .ruqyah-embedded-player iframe {
+        height: 280px;
+    }
+
+
+.ruqyah-embedded-player {
+    width: 100%;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #dcefe4;
+    margin-top: 20px;
+}
+
+.ruqyah-embedded-player iframe {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border: none;
+}}
+.ruqyah-player-placeholder {
+    width: 100%;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fbf9;
+    border: 1px solid #dcefe4;
+    border-radius: 14px;
+    margin-top: 20px;
+}
+
+.ruqyah-player-placeholder iframe {
+    display: block;
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+}

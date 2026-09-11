@@ -1,0 +1,521 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>القرآن الكريم | صدقة جارية</title>
+
+
+    <!-- Bootstrap -->
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"
+          rel="stylesheet">
+
+
+    <!-- Main CSS -->
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- ========================= -->
+    <!-- Navbar -->
+    <!-- ========================= -->
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
+
+        <div class="container">
+
+            <a class="navbar-brand fw-bold"
+               href="index.html">
+
+                صدقة جارية
+
+            </a>
+
+
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav">
+
+                <span class="navbar-toggler-icon"></span>
+
+            </button>
+
+
+            <div class="collapse navbar-collapse"
+                 id="navbarNav">
+
+                <ul class="navbar-nav me-auto">
+
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                           href="index.html">
+
+                            الرئيسية
+
+                        </a>
+
+                    </li>
+
+
+                    <li class="nav-item">
+
+                        <a class="nav-link active"
+                           href="quran.html">
+
+                            القرآن الكريم
+
+                        </a>
+
+                    </li>
+
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                           href="azkar.html">
+
+                            الأذكار
+
+                        </a>
+
+                    </li>
+
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                           href="duas.html">
+
+                            الأدعية
+
+                        </a>
+
+                    </li>
+
+
+                    <li class="nav-item">
+
+                        <a class="nav-link"
+                           href="tasbeeh.html">
+
+                            التسبيح
+
+                        </a>
+
+                    </li>
+
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+
+    <!-- ========================= -->
+    <!-- Hero -->
+    <!-- ========================= -->
+
+    <section class="quran-hero text-center py-5">
+
+        <div class="container">
+
+            <h1 class="fw-bold mb-3">
+
+                📖 القرآن الكريم
+
+            </h1>
+
+
+            <p class="lead mb-0">
+
+                اقرأ كتاب الله واهدِ ثواب القراءة للمتوفين
+
+            </p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ========================= -->
+    <!-- Quran Controls -->
+    <!-- ========================= -->
+
+    <main class="container py-5">
+
+
+        <div class="quran-control-card">
+
+
+            <div class="row g-3 align-items-center">
+
+
+                <!-- Surah -->
+
+                <div class="col-md-6">
+
+                    <label for="surahSelect"
+                           class="form-label fw-bold">
+
+                        اختر السورة
+
+                    </label>
+
+
+                    <select id="surahSelect"
+                            class="form-select">
+
+                        <option value="">
+
+                            جاري تحميل السور...
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- Mode -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label fw-bold">
+
+                        طريقة العرض
+
+                    </label>
+
+
+                    <div class="d-flex gap-2">
+
+
+                        <button id="readModeBtn"
+                                class="btn btn-success flex-fill">
+
+                            📖 المصحف
+
+                        </button>
+
+
+                        <button id="audioModeBtn"
+                                class="btn btn-outline-success flex-fill">
+
+                            🎧 الاستماع
+
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ========================= -->
+        <!-- Surah Information -->
+        <!-- ========================= -->
+
+        <div id="surahInfo"
+             class="text-center mt-4">
+
+        </div>
+
+
+
+        <!-- ========================= -->
+        <!-- READ MODE -->
+        <!-- ========================= -->
+
+        <section id="readSection"
+                 class="mt-4">
+
+
+            <div id="mushafPageContainer">
+
+                <div class="text-center text-muted py-5">
+
+                    اختر سورة للبدء بالقراءة
+
+                </div>
+
+            </div>
+
+
+
+            <!-- Page Navigation -->
+
+            <div id="pageNavigation"
+                 class="d-none d-flex justify-content-center align-items-center gap-3 mt-4">
+
+
+                <button id="previousPageBtn"
+                        class="btn btn-outline-success">
+
+                    ← الصفحة السابقة
+
+                </button>
+
+
+                <span id="pageNumber"
+                      class="fw-bold">
+
+                    صفحة 1
+
+                </span>
+
+
+                <button id="nextPageBtn"
+                        class="btn btn-success">
+
+                    الصفحة التالية →
+
+                </button>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- ========================= -->
+        <!-- AUDIO MODE -->
+        <!-- ========================= -->
+
+        <section id="audioSection"
+                 class="d-none mt-4">
+
+
+            <!-- ========================= -->
+            <!-- Full Surah Audio -->
+            <!-- ========================= -->
+
+            <div class="audio-main-card">
+
+
+                <div class="text-center">
+
+
+                    <div class="audio-big-icon">
+
+                        🎧
+
+                    </div>
+
+
+                    <h3 id="audioSurahName"
+                        class="fw-bold">
+
+                        اختر سورة
+
+                    </h3>
+
+
+                    <p id="audioStatus"
+                       class="text-muted">
+
+                        اختر سورة للاستماع
+
+                    </p>
+
+
+                </div>
+
+
+
+                <!-- ========================= -->
+                <!-- Full Surah Label -->
+                <!-- ========================= -->
+
+                <div class="text-center mt-3">
+
+
+                    <span class="badge bg-success px-3 py-2">
+
+                        🎧 استماع للسورة كاملة
+
+                    </span>
+
+
+                </div>
+
+
+
+                <!-- ========================= -->
+                <!-- Current Ayah -->
+                <!-- ========================= -->
+
+                <div id="currentAyahBox"
+                     class="current-ayah-box d-none mt-4">
+
+
+                    <div class="small text-muted mb-2">
+
+                        الآية الحالية
+
+                    </div>
+
+
+                    <div id="currentAyahText"
+                         class="current-ayah-text">
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- ========================= -->
+                <!-- Audio Player -->
+                <!-- ========================= -->
+
+                <audio id="quranAudio"
+                       controls
+                       class="w-100 mt-4">
+
+                </audio>
+
+
+
+                <!-- ========================= -->
+                <!-- Controls -->
+                <!-- ========================= -->
+
+                <div class="d-flex justify-content-center gap-2 mt-4">
+
+
+                    <button id="previousAyahBtn"
+                            class="btn btn-outline-success">
+
+                        ⏮ السابقة
+
+                    </button>
+
+
+                    <button id="playAudioBtn"
+                            class="btn btn-success px-4">
+
+                        ▶ تشغيل السورة
+
+                    </button>
+
+
+                    <button id="pauseAudioBtn"
+                            class="btn btn-outline-danger">
+
+                        ⏸ إيقاف
+
+                    </button>
+
+
+                    <button id="nextAyahBtn"
+                            class="btn btn-outline-success">
+
+                        التالية ⏭
+
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- ========================= -->
+            <!-- Audio Ayahs -->
+            <!-- ========================= -->
+
+            <div id="audioAyahsContainer"
+                 class="mt-4">
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- ========================= -->
+    <!-- Footer -->
+    <!-- ========================= -->
+
+    <footer class="bg-success text-white text-center py-4">
+
+
+        <div class="container">
+
+
+            <p class="mb-2">
+
+                اللهم اجعل ثواب هذا العمل صدقة جارية عن موتانا
+
+            </p>
+
+
+            <p class="mb-0 small">
+
+                © صدقة جارية
+
+            </p>
+
+
+        </div>
+
+
+    </footer>
+
+
+
+    <!-- ========================= -->
+    <!-- Bootstrap JS -->
+    <!-- ========================= -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+
+    </script>
+
+
+
+    <!-- ========================= -->
+    <!-- Quran JS -->
+    <!-- ========================= -->
+
+    <script src="quran.js"></script>
+
+
+</body>
+
+</html>
