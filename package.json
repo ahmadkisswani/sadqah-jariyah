@@ -1,0 +1,32 @@
+{
+  "name": "sadqah-jariyah",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "صدقة جارية — موقع إسلامي عربي modern/PWA مكرَّس لتوبة عبد العزيز الجربوعه ومحمد احمد مسلم",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@fontsource/amiri": "^5.1.0",
+    "@fontsource/noto-naskh-arabic": "^5.1.0",
+    "@fontsource/noto-sans-arabic": "^5.1.0",
+    "@mui/icons-material": "^6.4.0",
+    "@mui/material": "^6.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vite-plugin-pwa": "^0.21.1"
+  }
+}
