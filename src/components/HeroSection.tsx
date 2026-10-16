@@ -76,16 +76,10 @@ export function HeroSection() {
         </Stack>
 
         <Typography
-          variant="body1"
-          sx={{
-            maxWidth: 620,
-            mx: "auto",
-            color: "text.secondary",
-            lineHeight: 2.2,
-          }}
+          variant="body2"
+          sx={{ mt: 2, color: "text.secondary", fontStyle: "italic" }}
         >
-          اللهم اجعل هذا العمل صدقةً جاريةً عنهما، وانفع به كلّ من قرأ أو ذكر أو دعا، واجعله في
-          ميزان حسناتهما.
+          إهداء من: أسماء محمد مسلم وولدها
         </Typography>
       </Container>
     </Box>
