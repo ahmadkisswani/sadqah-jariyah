@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -11,6 +12,8 @@ import {
   Slider,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -23,19 +26,28 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import HeadphonesIcon from "@mui/icons-material/Headphones";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import { useNavigate, useParams } from "react-router-dom";
+import FormatAlignJustifyIcon from "@mui/icons-material/FormatAlignJustify";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { SURAHS } from "../data/quran/surahs";
-import { fetchSurah, type SurahPayload } from "../data/quran/api";
+import { fetchSurah, groupByPage, type SurahPayload } from "../data/quran/api";
+import type { Ayah } from "../data/quran/types";
+import { ayahAudioUrl } from "../data/quran/reciters";
 import { AyahCard } from "../components/AyahCard";
+import { MushafPage } from "../components/MushafPage";
+import { QuranAudioBar } from "../components/QuranAudioBar";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { usePageTitle } from "../hooks/usePageTitle";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useSnack } from "../hooks/useSnack";
+import { useQuranAudio, type AudioTarget } from "../hooks/useQuranAudio";
 import { fonts } from "../theme";
 import { toArabicNumber } from "../utils/arabic";
 
-const AUDIO_BASE = "https://cdn.islamic.network/quran/audio/128/ar.alafasy";
+/** طرق العرض: صفحات مصحف حقيقية، السورة كاملة في صفحة واحدة، أو بطاقة لكل آية. */
+type ViewMode = "pages" | "flow" | "cards";
 
 export default function QuranPage() {
   const { surahNumber } = useParams<{ surahNumber?: string }>();
@@ -91,7 +103,12 @@ function SurahIndex() {
               </Typography>
             </Box>
           </Stack>
-          <Button variant="contained" onClick={() => navigate(`/quran/${lastRead.surah}`)}>
+          <Button
+            variant="contained"
+            onClick={() =>
+              navigate(`/quran/${lastRead.surah}`, { state: { ayah: lastRead.ayah } })
+            }
+          >
             متابعة
           </Button>
         </Paper>
@@ -181,15 +198,61 @@ function QuranReader({ number }: { number: number }) {
   const meta = SURAHS.find((s) => s.number === number);
   usePageTitle(meta ? `سورة ${meta.name}` : "القرآن الكريم");
   const navigate = useNavigate();
+  const location = useLocation();
+  const snack = useSnack();
   const { isBookmarked, toggle } = useBookmarks();
+
   const [fontSize, setFontSize] = useLocalStorage<number>("sj-quran-font", 26);
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("sj-quran-view", "pages");
   const [, setLastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("sj-last-read", null);
 
   const [surah, setSurah] = useState<SurahPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [playingAyah, setPlayingAyah] = useState<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
+
+  // موضع الآيات في الصفحة — للانتقال إليها عند التلاوة أو عند "متابعة القراءة"
+  const ayahNodes = useRef(new Map<number, HTMLElement>());
+  const registerAyah = useCallback((ayahNumber: number, node: HTMLElement | null) => {
+    if (node) ayahNodes.current.set(ayahNumber, node);
+    else ayahNodes.current.delete(ayahNumber);
+  }, []);
+
+  const scrollToAyah = useCallback((ayahNumber: number) => {
+    const node = ayahNodes.current.get(ayahNumber);
+    if (!node) return;
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    node.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+  }, []);
+
+  // مراجع مستقرة يحتاجها نداء انتهاء المقطع (تمنع إعادة تسجيل المستمعين)
+  const audioRef = useRef<AudioTarget | null>(null);
+  const audioPlayRef = useRef<((ayah: Ayah) => Promise<void> | void) | null>(null);
+  const audioCloseRef = useRef<(() => void) | null>(null);
+
+  /**
+   * عند انتهاء مقطع الآية ننتقل تلقائيًا للآية التالية — فيُسمع الجزء متصلًا،
+   * ولأنّ عنصر الصوت نفسه يُستخدم دائمًا فإن iOS يسمح بهذا التشغيل البرمجي.
+   */
+  const handleEnded = useCallback(() => {
+    const current = audioRef.current;
+    if (!surah || !current || current.surah !== number) return;
+    const nextAyah = surah.ayahs[current.ayah];
+    if (!nextAyah) {
+      audioCloseRef.current?.();
+      snack(`أتممت سورة ${meta?.name ?? ""} — تقبّل الله`, "success");
+      return;
+    }
+    void audioPlayRef.current?.(nextAyah);
+  }, [meta?.name, number, snack, surah]);
+
+  const audio = useQuranAudio({ onEnded: handleEnded });
+
+  useEffect(() => {
+    audioRef.current = audio.current;
+  }, [audio.current]);
 
   const load = useCallback(() => {
     if (!meta) return;
@@ -208,25 +271,132 @@ function QuranReader({ number }: { number: number }) {
     load();
   }, [load]);
 
-  // إيقاف الصوت عند مغادرة السورة
-  useEffect(() => {
-    return () => {
-      audioRef.current?.pause();
-    };
-  }, [number]);
+  const pages = useMemo(() => (surah ? groupByPage(surah.ayahs) : []), [surah]);
 
-  const playAyah = (ayahNumber: number, globalNumber: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (playingAyah === ayahNumber) {
-      audio.pause();
-      setPlayingAyah(null);
-      return;
+  const playingAyah = audio.current && audio.current.surah === number ? audio.current.ayah : null;
+  const activeAyahNumber = playingAyah ?? selectedAyah;
+  const activeAyah = useMemo(
+    () => surah?.ayahs.find((ayah) => ayah.numberInSurah === activeAyahNumber) ?? null,
+    [activeAyahNumber, surah],
+  );
+
+  const selectAyah = useCallback(
+    (ayahNumber: number) => {
+      setSelectedAyah(ayahNumber);
+      setLastRead({ surah: number, ayah: ayahNumber });
+    },
+    [number, setLastRead],
+  );
+
+  const playAyah = useCallback(
+    (ayah: Ayah) => {
+      selectAyah(ayah.numberInSurah);
+      return audio.play({ surah: number, ayah: ayah.numberInSurah, global: ayah.number });
+    },
+    [audio, number, selectAyah],
+  );
+
+  useEffect(() => {
+    audioPlayRef.current = playAyah;
+  }, [playAyah]);
+
+  const stopAndClose = useCallback(() => {
+    audio.stop();
+    setSelectedAyah(null);
+  }, [audio]);
+
+  useEffect(() => {
+    audioCloseRef.current = stopAndClose;
+  }, [stopAndClose]);
+
+  // متابعة القراءة: الانتقال إلى الآية المحفوظة عند الوصول من الصفحة الرئيسية
+  const jumpAyah = (location.state as { ayah?: number } | null)?.ayah;
+  useEffect(() => {
+    if (!surah || !jumpAyah || jumpAyah < 1 || jumpAyah > surah.ayahs.length) return;
+    setSelectedAyah(jumpAyah);
+    const timer = window.setTimeout(() => scrollToAyah(jumpAyah), 150);
+    return () => window.clearTimeout(timer);
+  }, [jumpAyah, scrollToAyah, surah]);
+
+  // متابعة الآية المتلوّة تلقائيًا داخل الصفحة
+  useEffect(() => {
+    if (playingAyah == null) return;
+    scrollToAyah(playingAyah);
+  }, [playingAyah, scrollToAyah]);
+
+  // شاشة القفل: اسم السورة والقارئ + أزرار التشغيل
+  useEffect(() => {
+    if (!("mediaSession" in navigator) || !meta) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: activeAyahNumber
+          ? `سورة ${meta.name} — الآية ${toArabicNumber(activeAyahNumber)}`
+          : `سورة ${meta.name}`,
+        artist: audio.reciter.name,
+        album: "صدقة جارية",
+      });
+    } catch {
+      /* غير مدعوم على هذا المتصفح */
     }
-    audio.src = `${AUDIO_BASE}/${globalNumber}.mp3`;
-    audio.play().then(() => setPlayingAyah(ayahNumber)).catch(() => setPlayingAyah(null));
-    setLastRead({ surah: number, ayah: ayahNumber });
-  };
+  }, [activeAyahNumber, audio.reciter.name, meta]);
+
+  const toggleActive = useCallback(() => {
+    if (!activeAyah) return;
+    audio.toggle({ surah: number, ayah: activeAyah.numberInSurah, global: activeAyah.number });
+  }, [activeAyah, audio, number]);
+
+  const goAyah = useCallback(
+    (delta: 1 | -1) => {
+      if (!surah || activeAyahNumber == null) return;
+      const target = surah.ayahs[activeAyahNumber - 1 + delta];
+      if (target) void playAyah(target);
+    },
+    [activeAyahNumber, playAyah, surah],
+  );
+
+  const playSurah = useCallback(() => {
+    const first = surah?.ayahs[0];
+    if (first) void playAyah(first);
+  }, [playAyah, surah]);
+
+  // أزرار شاشة القفل في الجوال — تُسجَّل مرّة واحدة عبر مرجع محدَّث
+  const mediaHandlers = useRef({
+    toggleActive: () => {},
+    prev: () => {},
+    next: () => {},
+    pause: () => {},
+  });
+
+  useEffect(() => {
+    mediaHandlers.current = {
+      toggleActive,
+      prev: () => goAyah(-1),
+      next: () => goAyah(1),
+      pause: () => audio.pause(),
+    };
+  }, [audio, goAyah, toggleActive]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    const session = navigator.mediaSession;
+    const trySet = (action: MediaSessionAction, handler: MediaSessionActionHandler | null) => {
+      try {
+        session.setActionHandler(action, handler);
+      } catch {
+        /* إجراء غير مدعوم — نتجاهله */
+      }
+    };
+    trySet("play", () => mediaHandlers.current.toggleActive());
+    trySet("pause", () => mediaHandlers.current.pause());
+    trySet("previoustrack", () => mediaHandlers.current.prev());
+    trySet("nexttrack", () => mediaHandlers.current.next());
+    return () => {
+      trySet("play", null);
+      trySet("pause", null);
+      trySet("previoustrack", null);
+      trySet("nexttrack", null);
+    };
+  }, []);
 
   if (!meta) {
     return (
@@ -242,9 +412,10 @@ function QuranReader({ number }: { number: number }) {
 
   const previousMeta = SURAHS.find((s) => s.number === number - 1);
   const nextMeta = SURAHS.find((s) => s.number === number + 1);
+  const barVisible = activeAyah !== null;
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={3} sx={{ pb: barVisible ? { xs: 24, sm: 18, lg: 10 } : 0 }}>
       <Stack direction="row" alignItems="center" spacing={1}>
         <IconButton aria-label="رجوع إلى فهرس السور" onClick={() => navigate("/quran")}>
           <ArrowForwardIcon />
@@ -264,6 +435,13 @@ function QuranReader({ number }: { number: number }) {
               <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
                 <Chip label={meta.revelation} size="small" variant="outlined" />
                 <Chip label={`${toArabicNumber(meta.ayahCount)} آية`} size="small" variant="outlined" />
+                {pages[0] && (
+                  <Chip
+                    label={`الجزء ${toArabicNumber(pages[0].juz)}`}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
               </Stack>
             </Box>
 
@@ -295,9 +473,55 @@ function QuranReader({ number }: { number: number }) {
             sx={{ maxWidth: 320 }}
           />
 
-          <audio ref={audioRef} onEnded={() => setPlayingAyah(null)} preload="none" />
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            justifyContent="space-between"
+          >
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={viewMode}
+              onChange={(_e, value: ViewMode | null) => value && setViewMode(value)}
+              aria-label="طريقة عرض المصحف"
+            >
+              <ToggleButton value="pages" aria-label="عرض صفحات المصحف">
+                <MenuBookIcon fontSize="small" sx={{ ml: 0.75 }} />
+                صفحات
+              </ToggleButton>
+              <ToggleButton value="flow" aria-label="عرض السورة متصلة في صفحة واحدة">
+                <FormatAlignJustifyIcon fontSize="small" sx={{ ml: 0.75 }} />
+                متصل
+              </ToggleButton>
+              <ToggleButton value="cards" aria-label="عرض الآيات في بطاقات">
+                <ViewModuleIcon fontSize="small" sx={{ ml: 0.75 }} />
+                بطاقات
+              </ToggleButton>
+            </ToggleButtonGroup>
+
+            <Button
+              variant="contained"
+              startIcon={<HeadphonesIcon />}
+              onClick={playSurah}
+              disabled={!surah || (audio.isActive && playingAyah === 1)}
+            >
+              استماع للسورة
+            </Button>
+          </Stack>
+
+          <Typography variant="caption" color="text.secondary">
+            لمس الآية لتحديدها، ولمس رقمها في الدائرة لتشغيل تلاوتها. تنتقل التلاوة تلقائيًا
+            بين الآيات حتى نهاية السورة.
+          </Typography>
         </Stack>
       </Paper>
+
+      {audio.error && (
+        <Alert severity="warning" icon={<HeadphonesIcon />}>
+          {audio.error}
+        </Alert>
+      )}
 
       {loading && (
         <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
@@ -307,10 +531,7 @@ function QuranReader({ number }: { number: number }) {
 
       {error && !loading && (
         <>
-          <EmptyState
-            kind="error"
-            description="تعذّر تحميل السورة، حاول مرة أخرى."
-          />
+          <EmptyState kind="error" description="تعذّر تحميل السورة، حاول مرة أخرى." />
           <Stack direction="row" justifyContent="center">
             <Button variant="contained" onClick={load}>
               إعادة المحاولة
@@ -321,54 +542,103 @@ function QuranReader({ number }: { number: number }) {
 
       {surah && !loading && (
         <>
-          {number !== 1 && number !== 9 && (
-            <Typography
-              sx={{ fontFamily: fonts.quran, textAlign: "center", fontSize: "1.4rem", color: "text.secondary" }}
-            >
-              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-            </Typography>
-          )}
+          {viewMode === "cards" ? (
+            <>
+              {number !== 1 && number !== 9 && (
+                <Typography
+                  sx={{
+                    fontFamily: fonts.quran,
+                    textAlign: "center",
+                    fontSize: "1.4rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                </Typography>
+              )}
 
-          <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-            <Tooltip title="كتم/تشغيل التلاوة لكل آية عند الضغط على زر الاستماع">
-              <Chip icon={<HeadphonesIcon />} label="استماع (يتطلب اتصالًا)" variant="outlined" size="small" />
-            </Tooltip>
-          </Stack>
-
-          <Box>
-            {surah.ayahs.map((ayah) => (
-              <Box key={ayah.numberInSurah} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                  <AyahCard
-                    text={ayah.text}
-                    surahNumber={number}
-                    surahName={meta.name}
-                    ayahNumber={ayah.numberInSurah}
-                    fontSize={fontSize}
-                    bookmarked={isBookmarked(number, ayah.numberInSurah)}
-                    onToggleBookmark={() =>
-                      toggle({
-                        surah: number,
-                        surahName: meta.name,
-                        ayah: ayah.numberInSurah,
-                        text: ayah.text,
-                      })
-                    }
-                  />
-                </Box>
-                <Tooltip title={playingAyah === ayah.numberInSurah ? "إيقاف" : "استماع للآية"}>
-                  <IconButton
-                    aria-label={`استماع للآية ${ayah.numberInSurah}`}
-                    onClick={() => playAyah(ayah.numberInSurah, ayah.number)}
-                    color={playingAyah === ayah.numberInSurah ? "primary" : "default"}
-                    sx={{ mt: 1.5 }}
-                  >
-                    {playingAyah === ayah.numberInSurah ? <PauseIcon /> : <PlayArrowIcon />}
-                  </IconButton>
-                </Tooltip>
+              <Box>
+                {surah.ayahs.map((ayah) => (
+                  <Box key={ayah.numberInSurah} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                      <AyahCard
+                        text={ayah.text}
+                        surahNumber={number}
+                        surahName={meta.name}
+                        ayahNumber={ayah.numberInSurah}
+                        fontSize={fontSize}
+                        bookmarked={isBookmarked(number, ayah.numberInSurah)}
+                        onToggleBookmark={() =>
+                          toggle({
+                            surah: number,
+                            surahName: meta.name,
+                            ayah: ayah.numberInSurah,
+                            text: ayah.text,
+                          })
+                        }
+                      />
+                    </Box>
+                    <Tooltip title={playingAyah === ayah.numberInSurah ? "إيقاف" : "استماع للآية"}>
+                      <IconButton
+                        aria-label={`استماع للآية ${ayah.numberInSurah}`}
+                        onClick={() =>
+                          playingAyah === ayah.numberInSurah
+                            ? toggleActive()
+                            : void playAyah(ayah)
+                        }
+                        color={playingAyah === ayah.numberInSurah ? "primary" : "default"}
+                        sx={{ mt: 1.5 }}
+                      >
+                        {playingAyah === ayah.numberInSurah ? <PauseIcon /> : <PlayArrowIcon />}
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                ))}
               </Box>
-            ))}
-          </Box>
+            </>
+          ) : viewMode === "pages" ? (
+            <Stack spacing={3}>
+              {pages.map((page) => (
+                <MushafPage
+                  key={page.page}
+                  surahNumber={number}
+                  surahName={meta.name}
+                  revelation={meta.revelation}
+                  ayahCount={meta.ayahCount}
+                  juz={page.juz}
+                  pageNumber={page.page}
+                  ayahs={page.ayahs}
+                  showSurahHeader={page.ayahs[0]?.numberInSurah === 1}
+                  fontSize={fontSize}
+                  playingAyah={playingAyah}
+                  selectedAyah={selectedAyah}
+                  onSelectAyah={selectAyah}
+                  onTogglePlay={(ayah) =>
+                    playingAyah === ayah.numberInSurah ? toggleActive() : void playAyah(ayah)
+                  }
+                  registerAyah={registerAyah}
+                />
+              ))}
+            </Stack>
+          ) : (
+            <MushafPage
+              surahNumber={number}
+              surahName={meta.name}
+              revelation={meta.revelation}
+              ayahCount={meta.ayahCount}
+              juz={pages[0]?.juz}
+              ayahs={surah.ayahs}
+              showSurahHeader
+              fontSize={fontSize}
+              playingAyah={playingAyah}
+              selectedAyah={selectedAyah}
+              onSelectAyah={selectAyah}
+              onTogglePlay={(ayah) =>
+                playingAyah === ayah.numberInSurah ? toggleActive() : void playAyah(ayah)
+              }
+              registerAyah={registerAyah}
+            />
+          )}
 
           <Divider />
 
@@ -390,6 +660,37 @@ function QuranReader({ number }: { number: number }) {
             </Button>
           </Stack>
         </>
+      )}
+
+      {activeAyah && (
+        <QuranAudioBar
+          surahName={meta.name}
+          ayahNumber={activeAyah.numberInSurah}
+          ayahText={activeAyah.text}
+          ayahUrl={ayahAudioUrl(audio.reciter, activeAyah.number)}
+          status={audio.status}
+          error={audio.error}
+          position={audio.position}
+          duration={audio.duration}
+          reciter={audio.reciter}
+          bookmarked={isBookmarked(number, activeAyah.numberInSurah)}
+          canPrev={activeAyah.numberInSurah > 1}
+          canNext={activeAyah.numberInSurah < meta.ayahCount}
+          onTogglePlay={toggleActive}
+          onPrev={() => goAyah(-1)}
+          onNext={() => goAyah(1)}
+          onSeek={audio.seek}
+          onReciterChange={audio.setReciter}
+          onToggleBookmark={() =>
+            toggle({
+              surah: number,
+              surahName: meta.name,
+              ayah: activeAyah.numberInSurah,
+              text: activeAyah.text,
+            })
+          }
+          onClose={stopAndClose}
+        />
       )}
     </Stack>
   );

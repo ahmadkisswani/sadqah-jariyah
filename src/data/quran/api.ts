@@ -31,3 +31,28 @@ export async function fetchSurah(number: number): Promise<SurahPayload> {
 export function isSurahBundled(number: number): boolean {
   return `./text/${number}.json` in modules;
 }
+
+export type MushafPageData = {
+  /** رقم الصفحة في مصحف المدينة */
+  page: number;
+  /** رقم الجزء */
+  juz: number;
+  ayahs: Ayah[];
+};
+
+/**
+ * يجمع الآيات في صفحات مصحف حقيقية اعتمادًا على حقل `page` المضمَّن في النص،
+ * فتُعرض السورة كما في المصحف: صفحة تلو صفحة بنفس فواصل مصحف المدينة.
+ */
+export function groupByPage(ayahs: Ayah[]): MushafPageData[] {
+  const pages: MushafPageData[] = [];
+  for (const ayah of ayahs) {
+    const last = pages[pages.length - 1];
+    if (last && last.page === ayah.page) {
+      last.ayahs.push(ayah);
+    } else {
+      pages.push({ page: ayah.page, juz: ayah.juz ?? last?.juz ?? 1, ayahs: [ayah] });
+    }
+  }
+  return pages;
+}

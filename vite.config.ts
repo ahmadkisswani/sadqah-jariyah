@@ -36,18 +36,12 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "/index.html",
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cdn\.islamic\.network\/quran\/audio\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "quran-audio-cache",
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-              rangeRequests: true,
-            },
-          },
-        ],
+        // ملاحظة مهمّة: لا نُمرّر ملفات الصوت (mp3) عبر عامل الخدمة.
+        //
+        // مشغّلات الوسائط — خصوصًا iOS Safari — تطلب الصوت بطلبات نطاق
+        // (Range: bytes=…)، والاستجابة المخزّنة من نوع opaque لا يمكن تقطيعها،
+        // فيفشل التشغيل على iPhone. ترك الطلب يمرّ للشبكة مباشرة يبقيه يعمل.
+        runtimeCaching: [],
       },
     }),
   ],
