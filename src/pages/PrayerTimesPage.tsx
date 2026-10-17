@@ -12,6 +12,8 @@ import {
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import EditLocationAltIcon from "@mui/icons-material/EditLocationAlt";
 import MosqueIcon from "@mui/icons-material/Mosque";
+import CircularProgress from "@mui/material/CircularProgress";
+import { geolocationEnvironment } from "../data/prayer/location";
 import { SectionHeader } from "../components/SectionHeader";
 import { ShareButton } from "../components/ShareButton";
 import { NextPrayerCard } from "../components/prayer/NextPrayerCard";
@@ -148,6 +150,8 @@ export default function PrayerTimesPage() {
   );
 
   const noLocationYet = !location && resolver.status !== "resolving";
+  /** بيئة الموقع: على http لا يعمل GPS في الجوال — نخبر الزائر بدل الفشل الصامت. */
+  const gpsInsecure = geolocationEnvironment() === "insecure";
 
   return (
     <Stack spacing={4}>
@@ -198,17 +202,25 @@ export default function PrayerTimesPage() {
                 {STRINGS.location[lang]}
               </Typography>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
-              {resolver.notice ?? STRINGS.useGpsExplain[lang]}
-            </Typography>
+            {gpsInsecure ? (
+              <Alert severity="warning" sx={{ borderRadius: 3, width: "100%" }}>
+                {STRINGS.locationInsecure[lang]}
+              </Alert>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {resolver.notice ?? STRINGS.useGpsExplain[lang]}
+              </Typography>
+            )}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
               <Button
                 variant="contained"
-                startIcon={<MyLocationIcon />}
+                startIcon={
+                  resolver.busy ? <CircularProgress size={16} color="inherit" /> : <MyLocationIcon />
+                }
                 onClick={() => void resolver.requestPrecise()}
-                disabled={resolver.busy}
+                disabled={resolver.busy || gpsInsecure}
               >
-                {STRINGS.useMyLocation[lang]}
+                {resolver.busy ? STRINGS.locatingNow[lang] : STRINGS.useMyLocation[lang]}
               </Button>
               <Button
                 variant="outlined"
@@ -227,14 +239,27 @@ export default function PrayerTimesPage() {
           severity="info"
           sx={{ borderRadius: 3 }}
           action={
-            <Button color="inherit" size="small" onClick={() => void resolver.requestPrecise()}>
-              {lang === "ar" ? "تحديد أدق" : "Refine"}
-            </Button>
+            resolver.permission === "denied" ? (
+              <Button color="inherit" size="small" onClick={() => setLocationDialogOpen(true)}>
+                {STRINGS.chooseManually[lang]}
+              </Button>
+            ) : (
+              <Button
+                color="inherit"
+                size="small"
+                disabled={resolver.busy}
+                onClick={() => void resolver.requestPrecise()}
+              >
+                {resolver.busy ? STRINGS.locatingNow[lang] : lang === "ar" ? "تحديد أدق" : "Refine"}
+              </Button>
+            )
           }
         >
-          {lang === "ar"
-            ? `المواقيت محسوبة على موقع تقريبي حسب الشبكة (${location.city}). اسمح بالوصول لموقعك لدقة أعلى.`
-            : `Times are based on an approximate network location (${location.cityEn}). Allow location access for better accuracy.`}
+          {resolver.permission === "denied" && resolver.notice
+            ? resolver.notice
+            : lang === "ar"
+              ? `المواقيت محسوبة على موقع تقريبي حسب الشبكة (${location.city}). اسمح بالوصول لموقعك لدقة أعلى.`
+              : `Times are based on an approximate network location (${location.cityEn}). Allow location access for better accuracy.`}
         </Alert>
       ) : null}
 

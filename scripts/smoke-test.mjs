@@ -535,8 +535,8 @@ try {
   let homeReady = false;
   try {
     await browser.waitFor(
-      `!!document.querySelector('a[href="/prayer-times"]') && document.body.innerText.includes("صدقة جارية")`,
-      { timeoutMs: 25_000, label: "مدخل المواقيت في الرئيسية" },
+      `document.querySelectorAll('a[href="/prayer-times"]').length >= 2 && document.body.innerText.includes("صدقة جارية")`,
+      { timeoutMs: 25_000, label: "مدخل المواقيت وبطاقته في الرئيسية" },
     );
     homeReady = true;
   } catch {
@@ -547,7 +547,7 @@ try {
     clientWidth: document.documentElement.clientWidth,
   })`);
   check(
-    "الرئيسية سليمة ومعها مدخل المواقيت",
+    "الرئيسية سليمة وفيها مدخل المواقيت وبطاقته",
     homeReady && homeOverflow.scrollWidth <= homeOverflow.clientWidth + 1,
     JSON.stringify(homeOverflow),
   );
@@ -752,6 +752,36 @@ try {
     recovered = false;
   }
   check("زر إعادة المحاولة يعيد عرض المواقيت", recovered);
+
+  // إذن الموقع مرفوض (كما لو رفضه المستخدم على iPhone):
+  // يجب أن تظهر رسالة إرشادية، وتستمر المواقيت التقريبية أو يظهر الاختيار اليدوي — بلا انهيار
+  await browser.send("Browser.setPermission", {
+    permission: { name: "geolocation" },
+    setting: "denied",
+    origin: BASE_URL,
+  });
+  await browser.evaluate(`(() => { localStorage.removeItem("sj-prayer-settings"); return true; })()`);
+  await browser.send("Page.navigate", { url: `${BASE_URL}/prayer-times` });
+
+  let deniedNotice = false;
+  try {
+    await browser.waitFor(
+      `/الوصول إلى الموقع متوق/.test(document.body.innerText || "")`,
+      { timeoutMs: 35_000, label: "رسالة رفض إذن الموقع" },
+    );
+    deniedNotice = true;
+  } catch {
+    deniedNotice = false;
+  }
+  const deniedState = await browser.evaluate(`({
+    rows: document.querySelectorAll("[data-prayer]").length,
+    hasManual: /اختيار يدوي|اختر موقعك/.test(document.body.innerText || ""),
+  })`);
+  check(
+    "رفض إذن الموقع: إرشاد واضح مع مواقيت تقريبية أو اختيار يدوي",
+    deniedNotice && (deniedState.rows === 5 || deniedState.hasManual),
+    deniedNotice ? JSON.stringify(deniedState) : "لم تظهر رسالة الرفض",
+  );
 } catch (error) {
   check("اكتمل الاختبار بلا أخطاء تنفيذية", false, String(error.message ?? error));
   if (pageErrors.length > 0) {

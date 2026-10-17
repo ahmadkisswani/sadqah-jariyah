@@ -3,7 +3,9 @@ import {
   GeolocationError,
   approximateLocationFromIp,
   coordinatesText,
+  geolocationEnvironment,
   getGeolocationPermission,
+  isAppleMobile,
   requestPrecisePosition,
   resolveLocationNames,
   type LocationNames,
@@ -25,6 +27,11 @@ import type { PrayerSettings } from "./usePrayerSettings";
 
 export type LocationStatus = "resolving" | "ready" | "approximate" | "denied" | "missing";
 export type GeolocationPermission = "granted" | "denied" | "prompt" | "unknown";
+
+/** نص رفض الإذن — على iPhone نضيف مسار تمكينه من إعدادات النظام. */
+function deniedNotice(): string {
+  return isAppleMobile() ? STRINGS.locationDeniedIos.ar : STRINGS.locationDenied.ar;
+}
 
 type Options = {
   location: ResolvedLocation | null;
@@ -78,7 +85,9 @@ export function useLocationResolver({ location, onChange }: Options) {
         if (token !== tokenRef.current) return false;
         if (error instanceof GeolocationError && error.kind === "denied") {
           setPermission("denied");
-          if (showErrors) setNotice(STRINGS.locationDenied.ar);
+          if (showErrors) setNotice(deniedNotice());
+        } else if (error instanceof GeolocationError && error.kind === "insecure") {
+          if (showErrors) setNotice(STRINGS.locationInsecure.ar);
         } else if (showErrors) {
           setNotice(STRINGS.locationUnavailable.ar);
         }
@@ -115,20 +124,20 @@ export function useLocationResolver({ location, onChange }: Options) {
       if (approximate) {
         onChange({ location: approximate });
         setStatus("approximate");
-        setNotice(currentPermission === "denied" ? STRINGS.locationDenied.ar : null);
+        setNotice(currentPermission === "denied" ? deniedNotice() : null);
         return;
       }
     }
 
     if (saved) {
       setStatus(saved.source === "ip" ? "approximate" : "ready");
-      setNotice(saved.source === "ip" && currentPermission === "denied" ? STRINGS.locationDenied.ar : null);
+      setNotice(saved.source === "ip" && currentPermission === "denied" ? deniedNotice() : null);
       return;
     }
 
     if (currentPermission === "denied") {
       setStatus("denied");
-      setNotice(STRINGS.locationDenied.ar);
+      setNotice(deniedNotice());
     } else {
       setStatus("missing");
       setNotice(STRINGS.locationUnavailable.ar);
@@ -144,7 +153,8 @@ export function useLocationResolver({ location, onChange }: Options) {
   const requestPrecise = useCallback(async () => {
     setBusy(true);
     setStatus("resolving");
-    setNotice(null);
+    // رسالة تقدّم واضحة: قد تستغرق أول محاولة على الجوال ثوانٍ حتى تُظهر النافذة/الإصلاح
+    setNotice(STRINGS.locatingNow.ar);
     const token = ++tokenRef.current;
     const ok = await resolveGps(true, token);
     setBusy(false);
@@ -159,7 +169,7 @@ export function useLocationResolver({ location, onChange }: Options) {
     setPermission(currentPermission);
     if (currentPermission === "denied") {
       setStatus("denied");
-      setNotice(STRINGS.locationDenied.ar);
+      setNotice(deniedNotice());
     } else {
       setStatus("missing");
       setNotice(STRINGS.locationUnavailable.ar);

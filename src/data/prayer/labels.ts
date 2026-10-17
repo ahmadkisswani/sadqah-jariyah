@@ -204,6 +204,14 @@ export const STRINGS = {
     "We could not detect your location automatically. Please choose it manually.",
   ),
   locatingNow: L("جارٍ تحديد موقعك…", "Detecting your location…"),
+  locationDeniedIos: L(
+    "الوصول إلى الموقع متوقّف على هذا الجهاز. على iPhone: الإعدادات ← الخصوصية والأمان ← خدمة الموقع ← المواقع في Safari ← «أثناء استخدام التطبيق»، ثم أعد المحاولة أو اختر مدينتك يدويًا.",
+    "Location access is disabled on this device. On iPhone: Settings → Privacy & Security → Location Services → Safari Websites → While Using, then try again or pick your city manually.",
+  ),
+  locationInsecure: L(
+    "تحديد الموقع الدقيق يحتاج اتصالًا آمنًا (https) — ولهذا لا يعمل مع فتح الموقع من عنوان شبكة محلية. افتح الموقع من رابطه الأساسي، أو اختر مدينتك يدويًا الآن.",
+    "Precise location needs a secure (https) connection — it will not work when the site is opened from a local network address. Open the main site address, or pick your city manually.",
+  ),
   accuracyNote: L(
     "المواقيت محسوبة بالطريقة المختارة وقد تختلف قليلًا عن مسجدك — لكل مسجد اجتهاده في المعايير والتعديلات.",
     "Times are calculated with the selected method and may differ slightly from your local mosque.",

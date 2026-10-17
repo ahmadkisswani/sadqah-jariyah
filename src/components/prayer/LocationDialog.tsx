@@ -19,7 +19,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import PlaceIcon from "@mui/icons-material/Place";
 import { COUNTRIES, type CityEntry, type CountryEntry, type ManualCity } from "../../data/prayer/locations";
-import type { ResolvedLocation } from "../../data/prayer/location";
+import { geolocationEnvironment, isAppleMobile, type ResolvedLocation } from "../../data/prayer/location";
 import { STRINGS, type Lang } from "../../data/prayer/labels";
 import type { GeolocationPermission, LocationStatus } from "../../hooks/useLocationResolver";
 
@@ -59,6 +59,11 @@ export function LocationDialog({
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [coordsError, setCoordsError] = useState<string | null>(null);
+
+  // بيئة الموقع: على http (عنوان شبكة محلية) لا يسمح iPhone بالموقع إطلاقًا
+  const environment = geolocationEnvironment();
+  const gpsDisabled = environment !== "ok";
+  const appleMobile = isAppleMobile();
 
   useEffect(() => {
     if (!open) {
@@ -119,19 +124,29 @@ export function LocationDialog({
             <Typography variant="caption" color="text.secondary">
               {STRINGS.useGpsExplain[lang]}
             </Typography>
+            {environment === "insecure" ? (
+              <Alert severity="warning" sx={{ borderRadius: 3 }}>
+                {STRINGS.locationInsecure[lang]}
+              </Alert>
+            ) : null}
             <Box>
               <Button
                 variant="contained"
                 startIcon={busy ? <CircularProgress size={16} color="inherit" /> : <MyLocationIcon />}
                 onClick={onRequestPrecise}
-                disabled={busy || status === "resolving"}
+                disabled={busy || status === "resolving" || gpsDisabled}
               >
-                {STRINGS.useMyLocation[lang]}
+                {busy ? STRINGS.locatingNow[lang] : STRINGS.useMyLocation[lang]}
               </Button>
             </Box>
             {permission === "denied" ? (
               <Typography variant="caption" color="error">
-                {STRINGS.locationDenied[lang]}
+                {appleMobile ? STRINGS.locationDeniedIos[lang] : STRINGS.locationDenied[lang]}
+              </Typography>
+            ) : null}
+            {environment === "unsupported" ? (
+              <Typography variant="caption" color="error">
+                {STRINGS.locationUnavailable[lang]}
               </Typography>
             ) : null}
           </Stack>

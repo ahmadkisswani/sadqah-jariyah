@@ -9,6 +9,7 @@ import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import SchoolIcon from "@mui/icons-material/School";
 import StorefrontIcon from "@mui/icons-material/Storefront";
+import MosqueIcon from "@mui/icons-material/Mosque";
 import { HeroSection } from "../components/HeroSection";
 import { ServiceCard, IslamicCard } from "../components/ServiceCard";
 import { SectionHeader } from "../components/SectionHeader";
@@ -49,6 +50,13 @@ const SERVICES = [
     title: "التسبيح",
     description: "عدّاد تسبيح بسيط وكبير، مع أهداف ومحفوظ تلقائيًا.",
     to: "/tasbeeh",
+    accent: "primary" as const,
+  },
+  {
+    icon: MosqueIcon,
+    title: "مواقيت الصلاة",
+    description: "مواقيت اليوم حسب موقعك مع عدّاد للصلاة القادمة والتقويم الهجري.",
+    to: "/prayer-times",
     accent: "primary" as const,
   },
   {

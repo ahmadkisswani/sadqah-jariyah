@@ -26,7 +26,12 @@ export type ResolvedLocation = {
   savedAt: number;
 };
 
-export type GeolocationFailureKind = "denied" | "unavailable" | "timeout" | "unsupported";
+export type GeolocationFailureKind =
+  | "denied"
+  | "unavailable"
+  | "timeout"
+  | "unsupported"
+  | "insecure";
 
 export class GeolocationError extends Error {
   kind: GeolocationFailureKind;
@@ -51,6 +56,17 @@ const GEO_CACHE_KEY = "sj-prayer-geo-v1";
 const GEO_CACHE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 const IP_CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
 const GEO_TIMEOUT_MS = 8_000;
+
+/**
+ * مهل تحديد الموقع — مضبوطة على أجهزة الجوال وخصوصًا iPhone:
+ * أول محاولة سريعة من الشبكة (واي فاي/أبراج)، ثم محاولة GPS حقيقية بمهلة أطول،
+ * ثم المراقبة كملاذ أخير (بعض الأجهزة لا تُرجع الموقع عبر getCurrentPosition
+ * لكنها تُرجعه عبر watchPosition).
+ */
+const GEO_COARSE_TIMEOUT_MS = 10_000;
+const GEO_PRECISE_TIMEOUT_MS = 18_000;
+const GEO_WATCH_TIMEOUT_MS = 10_000;
+const GEO_RETRY_DELAY_MS = 700;
 
 type Json = Record<string, unknown>;
 type CacheEntry = { at: number; data: unknown };
@@ -191,40 +207,149 @@ export async function getGeolocationPermission(): Promise<
   }
 }
 
+/** بيئة تحديد الموقع في هذا الجهاز: جاهز، أو غير آمن (http)، أو غير مدعوم. */
+export type GeolocationEnvironment = "ok" | "insecure" | "unsupported";
+
 /**
- * طلب إحداثيات الجهاز.
- * لا نستعمل دقة عالية عن قصد: مواقيت الصلاة تحتاج مستوى المدينة، والدقة العالية
- * تُستهلك البطارية وتُبطئ الاستجابة بلا فائدة.
+ * فحص بيئة الموقع قبل أي طلب.
+ * مهم لـ iPhone: نظام Safari لا يسمح بالموقع إلا عبر اتصال آمن (https)، وعند
+ * فتح النسخة التجريبية من الجوال عبر عنوان الشبكة المحلية (http) يفشل الطلب
+ * بلا نافذة إذن — فنُظهر للزائر سببًا واضحًا بدل «تعذّر تحديد موقعك».
  */
-export function requestPrecisePosition(): Promise<{ latitude: number; longitude: number }> {
+export function geolocationEnvironment(): GeolocationEnvironment {
+  if (typeof window !== "undefined" && window.isSecureContext === false) return "insecure";
+  if (typeof navigator === "undefined" || !("geolocation" in navigator)) return "unsupported";
+  return "ok";
+}
+
+/** جهاز آبل (iPhone/iPad) — لإظهار إرشاد الإذن الخاص بـ iOS. */
+export function isAppleMobile(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return (
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (/Macintosh/i.test(ua) && typeof document !== "undefined" && "ontouchend" in document)
+  );
+}
+
+type Coordinates = { latitude: number; longitude: number };
+
+function toCoordinates(position: GeolocationPosition): Coordinates {
+  const latitude = position.coords.latitude;
+  const longitude = position.coords.longitude;
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    Math.abs(latitude) > 90 ||
+    Math.abs(longitude) > 180
+  ) {
+    throw new GeolocationError("unavailable");
+  }
+  return { latitude, longitude };
+}
+
+function classifyError(error: GeolocationPositionError): GeolocationError {
+  if (error.code === error.PERMISSION_DENIED) return new GeolocationError("denied");
+  if (error.code === error.TIMEOUT) return new GeolocationError("timeout");
+  return new GeolocationError("unavailable");
+}
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getPositionOnce(options: PositionOptions): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          try {
+            resolve(toCoordinates(position));
+          } catch (error) {
+            reject(error);
+          }
+        },
+        (error) => reject(classifyError(error)),
+        options,
+      );
+    } catch {
       reject(new GeolocationError("unsupported"));
-      return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        if (
-          !Number.isFinite(latitude) ||
-          !Number.isFinite(longitude) ||
-          Math.abs(latitude) > 90 ||
-          Math.abs(longitude) > 180
-        ) {
-          reject(new GeolocationError("unavailable"));
-          return;
-        }
-        resolve({ latitude, longitude });
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) reject(new GeolocationError("denied"));
-        else if (error.code === error.TIMEOUT) reject(new GeolocationError("timeout"));
-        else reject(new GeolocationError("unavailable"));
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 10 * 60 * 1000 },
-    );
   });
+}
+
+/** أول قراءة من watchPosition ثم إيقاف المراقبة — ملاذ أخير في بعض الأجهزة. */
+function getPositionFromWatch(timeoutMs: number): Promise<Coordinates> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let watchId: number | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const finish = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+      if (timer !== null) clearTimeout(timer);
+      action();
+    };
+
+    try {
+      watchId = navigator.geolocation.watchPosition(
+        (position) =>
+          finish(() => {
+            try {
+              resolve(toCoordinates(position));
+            } catch (error) {
+              reject(error);
+            }
+          }),
+        (error) => finish(() => reject(classifyError(error))),
+        { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 0 },
+      );
+      timer = setTimeout(() => finish(() => reject(new GeolocationError("timeout"))), timeoutMs);
+    } catch {
+      finish(() => reject(new GeolocationError("unsupported")));
+    }
+  });
+}
+
+/**
+ * طلب إحداثيات الجهاز بثلاث محاولات متدرّجة:
+ *   ١) إصلاح سريع من الشبكة (واي فاي/أبراج) — الأسرع على الجوال وعادة يكفي للمواقيت.
+ *   ٢) إصلاح GPS حقيقي بمهلة أطول — لمن لا تعمل معه المحاولة الأولى.
+ *   ٣) المراقبة (watchPosition) — بعض الأجهزة لا تُرجع شيئًا عبر getCurrentPosition.
+ *
+ * رفض الإذن (denied) يُوقف المحاولات فورًا فلا نُزعج الزائر بنوافذ متكرّرة.
+ */
+export async function requestPrecisePosition(): Promise<Coordinates> {
+  const environment = geolocationEnvironment();
+  if (environment === "insecure") throw new GeolocationError("insecure");
+  if (environment === "unsupported") throw new GeolocationError("unsupported");
+
+  const attempts: Array<() => Promise<Coordinates>> = [
+    () =>
+      getPositionOnce({
+        enableHighAccuracy: false,
+        timeout: GEO_COARSE_TIMEOUT_MS,
+        maximumAge: 5 * 60 * 1000,
+      }),
+    () => getPositionOnce({ enableHighAccuracy: true, timeout: GEO_PRECISE_TIMEOUT_MS, maximumAge: 0 }),
+    () => getPositionFromWatch(GEO_WATCH_TIMEOUT_MS),
+  ];
+
+  let lastError: GeolocationError = new GeolocationError("unavailable");
+  for (let index = 0; index < attempts.length; index += 1) {
+    // مهلة قصيرة قبل إعادة المحاولة: تعالج فشل أول طلب على iPhone/PWA.
+    if (index > 0) await delay(GEO_RETRY_DELAY_MS);
+    try {
+      return await attempts[index]();
+    } catch (error) {
+      const geoError = error instanceof GeolocationError ? error : new GeolocationError("unavailable");
+      if (geoError.kind === "denied" || geoError.kind === "unsupported" || geoError.kind === "insecure") {
+        throw geoError;
+      }
+      lastError = geoError;
+    }
+  }
+  throw lastError;
 }
 
 /** موقع تقريبي حسب عنوان الشبكة (IP) — بلا إذن المستخدم. */
