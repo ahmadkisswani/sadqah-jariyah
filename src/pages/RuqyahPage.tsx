@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import StopIcon from "@mui/icons-material/Stop";
 import HeadphonesIcon from "@mui/icons-material/Headphones";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { ruqyahVerses, ruqyahDuas, ruqyahAudio, type RuqyahItem } from "../data/ruqyah";
@@ -24,6 +25,9 @@ import { toArabicNumber } from "../utils/arabic";
 
 export default function RuqyahPage() {
   usePageTitle("الرقية الشرعية");
+  // تسجيل واحد فقط يُشغَّل في كل مرة: عند تشغيل تسجيل جديد يُزال المشغّل السابق
+  // من الصفحة تمامًا (لا يمكن إيقاف مشغّل خارجي مستضاف عبر iframe بغير إزالته).
+  const [activeAudioId, setActiveAudioId] = useState<string | null>(null);
 
   return (
     <Stack spacing={4}>
@@ -67,10 +71,22 @@ export default function RuqyahPage() {
 
       {/* الاستماع */}
       <Box component="section" aria-labelledby="ruqyah-audio">
-        <SectionHeader title="الاستماع إلى الرقية الشرعية" align="start" subtitle="تتطلب هذه التسجيلات اتصالًا بالإنترنت." />
+        <SectionHeader
+          title="الاستماع إلى الرقية الشرعية"
+          align="start"
+          subtitle="تتطلب هذه التسجيلات اتصالًا بالإنترنت، ويُشغَّل تسجيل واحد في كل مرة."
+        />
         <Stack spacing={2}>
           {ruqyahAudio.map((audio) => (
-            <AudioCard key={audio.id} title={audio.title} reciter={audio.reciter} url={audio.url} />
+            <AudioCard
+              key={audio.id}
+              title={audio.title}
+              reciter={audio.reciter}
+              url={audio.url}
+              active={activeAudioId === audio.id}
+              onPlay={() => setActiveAudioId(audio.id)}
+              onStop={() => setActiveAudioId(null)}
+            />
           ))}
         </Stack>
       </Box>
@@ -106,9 +122,22 @@ function RuqyahBlock({ item, index, actionLabel }: { item: RuqyahItem; index: nu
   );
 }
 
-function AudioCard({ title, reciter, url }: { title: string; reciter: string; url: string }) {
+type AudioCardProps = {
+  title: string;
+  reciter: string;
+  url: string;
+  /** هل هذا هو التسجيل قيد التشغيل الآن؟ */
+  active: boolean;
+  onPlay: () => void;
+  onStop: () => void;
+};
+
+/**
+ * بطاقة تسجيل: يشغّل المشغّل المستضاف (iframe) عند الطلب ويُزال بالكامل عند
+ * إيقافه أو عند تشغيل تسجيل آخر — فلا تتشغّل تسجيلات متعدّدة معًا.
+ */
+function AudioCard({ title, reciter, url, active, onPlay, onStop }: AudioCardProps) {
   const snack = useSnack();
-  const [loaded, setLoaded] = useState(false);
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 2.5 }, border: "1px solid", borderColor: "divider" }}>
@@ -119,11 +148,12 @@ function AudioCard({ title, reciter, url }: { title: string; reciter: string; ur
             width: 46,
             height: 46,
             borderRadius: "14px",
-            bgcolor: "rgba(31,93,76,0.10)",
-            color: "primary.main",
+            bgcolor: active ? "rgba(201,162,75,0.18)" : "rgba(31,93,76,0.10)",
+            color: active ? "secondary.dark" : "primary.main",
             display: "grid",
             placeItems: "center",
             flexShrink: 0,
+            transition: "background-color .2s ease",
           }}
         >
           <HeadphonesIcon />
@@ -134,12 +164,16 @@ function AudioCard({ title, reciter, url }: { title: string; reciter: string; ur
             {reciter}
           </Typography>
         </Box>
-        {!loaded && (
+        {active ? (
+          <Button variant="outlined" color="inherit" startIcon={<StopIcon />} onClick={onStop}>
+            إيقاف
+          </Button>
+        ) : (
           <Button
             variant="contained"
             startIcon={<PlayArrowIcon />}
             onClick={() => {
-              setLoaded(true);
+              onPlay();
               snack("جارٍ تحميل التسجيل…", "info");
             }}
           >
@@ -148,7 +182,7 @@ function AudioCard({ title, reciter, url }: { title: string; reciter: string; ur
         )}
       </Stack>
 
-      <Collapse in={loaded} unmountOnExit>
+      <Collapse in={active} unmountOnExit timeout={200}>
         <Box sx={{ mt: 2, borderRadius: 2, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
           <Box
             component="iframe"

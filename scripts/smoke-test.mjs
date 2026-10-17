@@ -486,6 +486,42 @@ try {
     indexText.includes(normalizeArabic("سورة الفاتحة")) &&
       indexText.includes(normalizeArabic("سورة الناس")),
   );
+
+  // 10) الرقية: تسجيل واحد فقط يعمل في كل مرة (لا تتشغّل تسجيلات معًا)
+  const audioSection = 'section[aria-labelledby="ruqyah-audio"]';
+  const playerState = `({
+    frames: document.querySelectorAll('iframe').length,
+    playing: [...document.querySelectorAll(${JSON.stringify(audioSection)} + ' button')]
+      .filter((button) => button.textContent.includes("إيقاف")).length,
+  })`;
+
+  await browser.send("Page.navigate", { url: `${BASE_URL}/ruqyah` });
+  await browser.waitFor(`!!document.querySelector(${JSON.stringify(audioSection)})`, {
+    timeoutMs: 20_000,
+    label: "قسم الاستماع في الرقية",
+  });
+
+  await browser.clickText(`${audioSection} button`, "تشغيل");
+  await browser.waitFor(`document.querySelectorAll('iframe').length === 1`, {
+    timeoutMs: 10_000,
+    intervalMs: 200,
+    label: "تشغيل التسجيل الأول",
+  });
+
+  // تشغيل تسجيل آخر: يجب أن يُزال المشغّل الأول بالكامل ويبقى واحد فقط
+  await browser.clickText(`${audioSection} button`, "تشغيل");
+  let singlePlayer = false;
+  for (let attempt = 0; attempt < 25 && !singlePlayer; attempt += 1) {
+    await sleep(300);
+    const state = await browser.evaluate(playerState);
+    singlePlayer = state.frames === 1 && state.playing === 1;
+  }
+  const finalState = await browser.evaluate(playerState);
+  check(
+    "الرقية: تسجيل واحد فقط يعمل في كل مرة",
+    singlePlayer,
+    `المشغّلات: ${finalState.frames} — أزرار إيقاف: ${finalState.playing}`,
+  );
 } catch (error) {
   check("اكتمل الاختبار بلا أخطاء تنفيذية", false, String(error.message ?? error));
   if (pageErrors.length > 0) {
