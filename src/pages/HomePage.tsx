@@ -13,6 +13,7 @@ import { HeroSection } from "../components/HeroSection";
 import { ServiceCard, IslamicCard } from "../components/ServiceCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { DailyWirdCard } from "../components/DailyWirdCard";
+import { PrayerEntryStrip } from "../components/prayer/PrayerEntryStrip";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { ShareButton } from "../components/ShareButton";
 import { IslamicPattern } from "../components/IslamicPattern";
@@ -89,6 +90,11 @@ export default function HomePage() {
           subtitle="آيةٌ وذكرٌ ودعاءٌ وتذكيرٌ يتجدّد كل يوم، ويعمل دون اتصال."
         />
         <DailyWirdCard content={daily} />
+      </Box>
+
+      {/* مدخل المواقيت: يقرأ المخزّن محليًا فقط — بلا طلب شبكة أو إذن موقع */}
+      <Box sx={{ maxWidth: 860, mx: "auto", width: "100%" }}>
+        <PrayerEntryStrip />
       </Box>
 
       <Box component="section" aria-labelledby="services-heading">

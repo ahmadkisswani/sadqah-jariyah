@@ -38,6 +38,8 @@ export function BottomNav() {
           bottom: 0,
           left: 0,
           right: 0,
+          maxWidth: "100vw",
+          overflowX: "hidden",
           zIndex: (t) => t.zIndex.appBar,
           borderTop: "1px solid",
           borderColor: "divider",
@@ -52,7 +54,17 @@ export function BottomNav() {
             if (value === 4) setMoreOpen(true);
             else navigate(BOTTOM_NAV_ITEMS[value].to);
           }}
-          sx={{ height: 62 }}
+          sx={{
+            height: 62,
+            // نسمح للأزرار بالانضغاط على الجوالات الضيّقة فلا يزيد الشريط عن عرض الشاشة
+            "& .MuiBottomNavigationAction-root": { minWidth: 0, px: 0.25, overflow: "hidden" },
+            "& .MuiBottomNavigationAction-label": {
+              whiteSpace: "nowrap",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            },
+          }}
         >
           {BOTTOM_NAV_ITEMS.map((item) => {
             const Icon = item.icon;

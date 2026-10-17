@@ -1,4 +1,4 @@
-// اختبار دخاني حقيقي (واجهة + صوت) لصفحة القرآن.
+// اختبار دخاني حقيقي (واجهة + صوت) لصفحة القرآن، والرقية، ومواقيت الصلاة.
 //
 // يُشغّل متصفحًا (Chrome/Edge) بدون واجهة على نسخة الإنتاج المبنية في dist/،
 // ويحاكي شاشة جوال، ثم يتحقّق من:
@@ -7,6 +7,9 @@
 //   3) تشغيل التلاوة بلمسة حقيقية على رقم الآية، وتقدّم الوقت فعليًا.
 //   4) الانتقال التلقائي للآية التالية عند انتهاء المقطع.
 //   5) تغيير القارئ أثناء التشغيل.
+//   6) الرقية: مشغّل واحد فقط يعمل في كل مرة.
+//   7) مواقيت الصلاة: الصلوات الخمس، العدّ التنازلي، الموقع (GPS مُحاكى)،
+//      التقويم الهجري وتفاصيل اليوم، تبديل المذهب، والتعامل مع انقطاع الشبكة.
 //
 // الاستخدام:  node scripts/smoke-test.mjs  [--url http://localhost:4173] [--fast]
 // (بلا --url يشغّل خادم المعاينة تلقائيًا ثم يوقفه)
@@ -136,7 +139,9 @@ class Cdp {
       if (!el) return null;
       el.scrollIntoView({ block: "center", behavior: "instant" });
       const r = el.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      // إحداثيات النقر في CDP نسبةً إلى نافذة العرض المرئية لا إلى الصفحة
+      const vv = window.visualViewport;
+      return { x: r.left + r.width / 2 - (vv ? vv.offsetLeft : 0), y: r.top + r.height / 2 - (vv ? vv.offsetTop : 0) };
     })()`);
     if (!box) throw new Error(`لم يُعثر على العنصر: ${selector}${text ? ` («${text}»)` : ""}`);
     const params = { x: Math.round(box.x), y: Math.round(box.y), button: "left", clickCount: 1 };
@@ -522,6 +527,231 @@ try {
     singlePlayer,
     `المشغّلات: ${finalState.frames} — أزرار إيقاف: ${finalState.playing}`,
   );
+
+  /* ------------------------- مواقيت الصلاة ------------------------- */
+
+  // الرئيسية: يعمل المدخل إلى المواقيت (بلا طلب إذن موقع ولا طلب شبكة) ولا تتغيّر هوية الصفحة
+  await browser.send("Page.navigate", { url: `${BASE_URL}/` });
+  let homeReady = false;
+  try {
+    await browser.waitFor(
+      `!!document.querySelector('a[href="/prayer-times"]') && document.body.innerText.includes("صدقة جارية")`,
+      { timeoutMs: 25_000, label: "مدخل المواقيت في الرئيسية" },
+    );
+    homeReady = true;
+  } catch {
+    homeReady = false;
+  }
+  const homeOverflow = await browser.evaluate(`({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  })`);
+  check(
+    "الرئيسية سليمة ومعها مدخل المواقيت",
+    homeReady && homeOverflow.scrollWidth <= homeOverflow.clientWidth + 1,
+    JSON.stringify(homeOverflow),
+  );
+
+  // موقع مُحاكى (عمّان) + إذن ممنوح + منطقة زمنية محدّدة
+  await browser.send("Browser.grantPermissions", {
+    origin: BASE_URL,
+    permissions: ["geolocation"],
+  });
+  await browser.send("Emulation.setGeolocationOverride", {
+    latitude: 31.95,
+    longitude: 35.91,
+    accuracy: 25,
+  });
+  await browser.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Amman" });
+
+  await browser.send("Page.navigate", { url: `${BASE_URL}/prayer-times` });
+  let prayersReady = true;
+  try {
+    await browser.waitFor(`document.querySelectorAll("[data-prayer]").length === 5`, {
+      timeoutMs: 35_000,
+      label: "جدول الصلوات الخمس",
+    });
+  } catch {
+    prayersReady = false;
+  }
+  check(
+    "صفحة المواقيت تعرض الصلوات الخمس",
+    prayersReady,
+    prayersReady ? "" : (await browser.evaluate("document.body.innerText")).slice(0, 260).replace(/\n/g, " | "),
+  );
+
+  /** نص كل صف صلاة: { fajr: "الفجر ٥:٢٠ ص ..." }. */
+  const readRows = `(() => {
+    const out = {};
+    for (const el of document.querySelectorAll("[data-prayer]")) {
+      out[el.dataset.prayer] = el.innerText.replace(/\\n/g, " ");
+    }
+    return out;
+  })()`;
+  const timePattern = /[٠-٩]{1,2}:[٠-٩]{2}/;
+
+  const rows = await browser.evaluate(readRows);
+  check(
+    "كل صلاة من الخمس تعرض وقتها",
+    ["fajr", "dhuhr", "asr", "maghrib", "isha"].every((key) => timePattern.test(rows[key] ?? "")),
+    Object.entries(rows)
+      .map(([key, value]) => `${key}:${(value.match(timePattern) ?? ["—"])[0]}`)
+      .join(" "),
+  );
+
+  const states = await browser.evaluate(
+    `[...document.querySelectorAll("[data-prayer]")].map((el) => el.dataset.state)`,
+  );
+  check(
+    "لكل صلاة حالة واضحة (مضت/الآن/قادمة)",
+    states.length === 5 && states.every((state) => ["completed", "current", "upcoming"].includes(state)) &&
+      states.some((state) => state === "current" || state === "upcoming"),
+    states.join(","),
+  );
+
+  // العدّ التنازلي يتحدّث فعلًا (ثانية واحدة على الأقل)
+  const timerText = `document.querySelector('[role="timer"]')?.textContent ?? ""`;
+  const tickOne = await browser.evaluate(timerText);
+  await sleep(2_600);
+  const tickTwo = await browser.evaluate(timerText);
+  check(
+    "العدّ التنازلي للصلاة القادمة يتحدّث كل ثانية",
+    tickOne.length > 0 && tickTwo.length > 0 && tickOne !== tickTwo,
+    `${tickOne} ← ${tickTwo}`,
+  );
+
+  const rawText = await browser.evaluate("document.body.innerText");
+  const pageText = normalizeArabic(rawText);
+  check(
+    "الموقع المُحاكى (عمّان) معروض في الصفحة",
+    /عمان|31\.95/.test(pageText),
+    pageText.slice(0, 120),
+  );
+  check("المنطقة الزمنية للموقع معروضة", pageText.includes("Asia/Amman"));
+  check("التاريخ الهجري معروض بجانب الميلادي", rawText.includes("هـ"), rawText.slice(0, 160).replace(/\n/g, " | "));
+  check(
+    "ملاحظة اختلاف التواريخ الهجرية معروضة",
+    pageText.includes(normalizeArabic("قد تختلف التواريخ الهجرية")),
+  );
+  check(
+    "ملاحظة اختلاف المواقيت عن المسجد معروضة",
+    pageText.includes(normalizeArabic("قد تختلف قليلًا عن مسجدك")),
+  );
+  check(
+    "طريقة الحساب المستخدمة معروضة",
+    pageText.includes(normalizeArabic("الطريقة المستخدمة فعليًا")),
+  );
+
+  const overflowInfo = await browser.evaluate(`({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    screenWidth: window.screen.width,
+  })`);
+  check(
+    "لا تمرير أفقي في صفحة المواقيت على الجوال",
+    overflowInfo.scrollWidth <= overflowInfo.clientWidth + 1,
+    JSON.stringify(overflowInfo),
+  );
+
+  // التقويم الشهري: أيام الشهر + تمييز اليوم
+  const calendarCells = await browser.evaluate(
+    `document.querySelectorAll("[data-calendar-day]").length`,
+  );
+  const todayCells = await browser.evaluate(
+    `document.querySelectorAll('[data-today="true"]').length`,
+  );
+  check(
+    "التقويم الشهري يعرض أيام الشهر كاملة",
+    calendarCells >= 28 && calendarCells <= 31,
+    `الخلايا: ${calendarCells}`,
+  );
+  check("تمييز اليوم الحالي في التقويم", todayCells === 1, `المميّزة: ${todayCells}`);
+
+  // نقر يوم يفتح تفاصيله (تاريخ هجري + مواقيت اليوم)
+  let dialogWorks = false;
+  try {
+    await browser.click('[data-today="true"]');
+    await browser.waitFor(`!!document.querySelector('[role="dialog"]')`, {
+      timeoutMs: 8_000,
+      label: "نافذة تفاصيل اليوم",
+    });
+    await browser.waitFor(
+      `(() => {
+        const dialog = document.querySelector('[role="dialog"]');
+        if (!dialog) return false;
+        return (dialog.innerText.match(/[٠-٩]{1,2}:[٠-٩]{2}/g) ?? []).length >= 5;
+      })()`,
+      { timeoutMs: 20_000, label: "مواقيت اليوم داخل النافذة" },
+    );
+    dialogWorks = true;
+  } catch {
+    dialogWorks = false;
+  }
+  check("نقر يوم في التقويم يعرض تفاصيله ومواقيته", dialogWorks);
+  if (dialogWorks) {
+    await browser.click('[role="dialog"] button[aria-label="إغلاق"]');
+    await sleep(400);
+  }
+
+  // تغيير المذهب: العصر الحنفي متأخر عن المعتمد
+  let expanded = false;
+  for (let attempt = 0; attempt < 4 && !expanded; attempt += 1) {
+    await browser.click("#sj-prayer-settings");
+    await sleep(700);
+    expanded = await browser.evaluate(
+      `document.querySelector("#sj-prayer-settings")?.getAttribute("aria-expanded") === "true"`,
+    );
+  }
+  const readAsrClock = `document.querySelector('[data-prayer="asr"]')?.innerText.match(/[٠-٩]{1,2}:[٠-٩]{2}/)?.[0] ?? ""`;
+  const asrBefore = await browser.evaluate(readAsrClock);
+  await browser.clickText("button", "الحنفي");
+  let asrAfter = asrBefore;
+  for (let attempt = 0; attempt < 40 && asrAfter === asrBefore; attempt += 1) {
+    await sleep(500);
+    asrAfter = await browser.evaluate(readAsrClock);
+  }
+  check(
+    "تغيير مذهب العصر (إلى الحنفي) يحدّث الوقت",
+    expanded && Boolean(asrBefore) && Boolean(asrAfter) && asrAfter !== asrBefore,
+    `${asrBefore || "—"} ← ${asrAfter || "—"}${expanded ? "" : " (لم تُفتح الإعدادات)"}`,
+  );
+
+  // انقطاع الخدمة: رسالة واضحة بدل أوقات وهمية، ثم التعافي بإعادة المحاولة
+  await browser.send("Network.enable");
+  await browser.evaluate(`window.localStorage.removeItem("sj-prayer-cache-v1")`);
+  await browser.send("Network.setBlockedURLs", { urls: ["*api.aladhan.com*"] });
+  await browser.send("Page.navigate", { url: `${BASE_URL}/prayer-times` });
+
+  let gracefulFailure = false;
+  try {
+    await browser.waitFor(`/مواقيت الصلاة غير متاحة مؤقتا/.test(${NORMALIZED_BODY})`, {
+      timeoutMs: 40_000,
+      label: "رسالة تعذّر المواقيت",
+    });
+    gracefulFailure = true;
+  } catch {
+    gracefulFailure = false;
+  }
+  const fakeRows = await browser.evaluate(`document.querySelectorAll("[data-prayer]").length`);
+  check(
+    "عند تعذّر الخدمة: رسالة واضحة وبلا أوقات وهمية",
+    gracefulFailure && fakeRows === 0,
+    gracefulFailure ? `صفوف معروضة: ${fakeRows}` : "لم تظهر الرسالة",
+  );
+
+  await browser.send("Network.setBlockedURLs", { urls: [] });
+  let recovered = false;
+  try {
+    await browser.clickText("#sj-times button", "إعادة المحاولة");
+    await browser.waitFor(`document.querySelectorAll("[data-prayer]").length === 5`, {
+      timeoutMs: 30_000,
+      label: "عودة المواقيت بعد إعادة المحاولة",
+    });
+    recovered = true;
+  } catch {
+    recovered = false;
+  }
+  check("زر إعادة المحاولة يعيد عرض المواقيت", recovered);
 } catch (error) {
   check("اكتمل الاختبار بلا أخطاء تنفيذية", false, String(error.message ?? error));
   if (pageErrors.length > 0) {

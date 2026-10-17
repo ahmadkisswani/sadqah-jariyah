@@ -7,6 +7,7 @@ import HealingIcon from "@mui/icons-material/Healing";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
+import MosqueIcon from "@mui/icons-material/Mosque";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 export type NavItem = {
@@ -21,6 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "الأذكار", to: "/azkar", icon: AutoStoriesIcon },
   { label: "الأدعية", to: "/duas", icon: FavoriteIcon },
   { label: "التسبيح", to: "/tasbeeh", icon: AdjustIcon },
+  { label: "مواقيت الصلاة", to: "/prayer-times", icon: MosqueIcon },
   { label: "الرقية الشرعية", to: "/ruqyah", icon: HealingIcon },
   { label: "ورد اليوم", to: "/daily", icon: WbSunnyOutlinedIcon },
   { label: "عن الموقع", to: "/about", icon: InfoOutlinedIcon },

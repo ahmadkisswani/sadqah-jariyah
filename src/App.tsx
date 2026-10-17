@@ -15,6 +15,7 @@ const RuqyahPage = lazy(() => import("./pages/RuqyahPage"));
 const DailyPage = lazy(() => import("./pages/DailyPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
+const PrayerTimesPage = lazy(() => import("./pages/PrayerTimesPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/tasbeeh" element={<TasbeehPage />} />
               <Route path="/ruqyah" element={<RuqyahPage />} />
               <Route path="/daily" element={<DailyPage />} />
+              <Route path="/prayer-times" element={<PrayerTimesPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/bookmarks" element={<BookmarksPage />} />
               <Route path="*" element={<NotFoundPage />} />

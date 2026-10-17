@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "smoke": "node scripts/smoke-test.mjs",
+    "test:prayer": "node scripts/prayer-logic-test.mjs",
     "verify": "node scripts/verify-build.mjs"
   },
   "dependencies": {
