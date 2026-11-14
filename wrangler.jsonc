@@ -2,6 +2,9 @@
   "name": "sadqah-jariyah",
   "compatibility_date": "2026-11-14",
   "main": "worker/index.js",
+  "build": {
+    "command": "npm run build"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
