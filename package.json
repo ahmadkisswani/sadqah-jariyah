@@ -15,7 +15,9 @@
     "test:events": "node scripts/events-test.mjs",
     "test:share": "node scripts/share-test.mjs",
     "test:content": "node scripts/content-test.mjs",
-    "verify": "node scripts/verify-build.mjs"
+    "verify": "node scripts/verify-build.mjs",
+    "deploy": "npx wrangler deploy",
+    "deploy:ci": "npm run build && npx wrangler deploy"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
