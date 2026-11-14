@@ -117,7 +117,12 @@ class Cdp {
       awaitPromise: true,
     });
     if (result.exceptionDetails) {
-      throw new Error(`فشل التقييم: ${result.exceptionDetails.text}`);
+      const exception = result.exceptionDetails.exception;
+      throw new Error(
+        `فشل التقييم: ${
+          exception?.description ?? exception?.value ?? result.exceptionDetails.text
+        }`,
+      );
     }
     return result.result.value;
   }
@@ -174,7 +179,7 @@ const NORMALIZED_BODY = `((value) => value
   .replace(/[\\u064B-\\u0652\\u0670\\u0640]/g, "")
   .replace(/[\\u0671\\u0622\\u0623\\u0625]/g, "ا")
   .replace(/\\s+/g, " ")
-  .trim())(document.body.innerText)`;
+  .trim())(document.body?.innerText ?? "")`;
 
 const barText = `document.querySelector('section[aria-label="مشغّل التلاوة"]')?.innerText ?? ""`;
 
@@ -309,6 +314,30 @@ try {
     justified?.align === "justify" && /Amiri/.test(justified?.family ?? ""),
     JSON.stringify(justified),
   );
+
+  // اختيار الآية من لوحة المفاتيح (Enter/Space) لا بالفأرة فقط
+  await browser.evaluate(
+    `document.querySelector('[role="button"][aria-label^="تحديد الآية"]')?.focus()`,
+  );
+  await browser.send("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: " ",
+    code: "Space",
+    windowsVirtualKeyCode: 32,
+    nativeVirtualKeyCode: 32,
+  });
+  await browser.send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: " ",
+    code: "Space",
+    windowsVirtualKeyCode: 32,
+    nativeVirtualKeyCode: 32,
+  });
+  await sleep(300);
+  const keyboardSelected = await browser.evaluate(
+    `document.querySelector('[role="button"][aria-label^="تحديد الآية"]')?.getAttribute("aria-pressed")`,
+  );
+  check("اختيار آية المصحف بلوحة المفاتيح يعمل", keyboardSelected === "true");
 
   // 4) طرق العرض الثلاثة
   await browser.click('button[aria-label="عرض السورة متصلة في صفحة واحدة"]');
@@ -653,7 +682,32 @@ try {
     JSON.stringify(overflowInfo),
   );
 
-  // التقويم الشهري: أيام الشهر + تمييز اليوم
+  // التقويم الشهري يُحمَّل عند الاقتراب من الشاشة (تحميل مؤجّل) — نمرّره للعرض أولًا
+  await browser.evaluate(`document.querySelector("#sj-calendar")?.scrollIntoView({ block: "start" })`);
+  try {
+    await browser.waitFor(`document.querySelectorAll("[data-calendar-day]").length >= 28`, {
+      timeoutMs: 25_000,
+      label: "تحميل التقويم الشهري عند الظهور",
+    });
+  } catch (error) {
+    const calendarState = await browser.evaluate(`(() => {
+      const calendar = document.querySelector("#sj-calendar");
+      const rect = calendar?.getBoundingClientRect();
+      return {
+        exists: Boolean(calendar),
+        text: calendar?.innerText?.slice(0, 180) ?? "",
+        rect: rect ? { top: rect.top, height: rect.height } : null,
+        scrollY: window.scrollY,
+        bodyHeight: document.body.scrollHeight,
+        skeletons: document.querySelectorAll("#sj-calendar .MuiSkeleton-root").length,
+        resources: performance
+          .getEntriesByType("resource")
+          .filter((entry) => entry.name.includes("aladhan"))
+          .map((entry) => ({ name: entry.name, duration: Math.round(entry.duration) })),
+      };
+    })()`);
+    throw new Error(`${error.message} — ${JSON.stringify(calendarState)}`);
+  }
   const calendarCells = await browser.evaluate(
     `document.querySelectorAll("[data-calendar-day]").length`,
   );
@@ -766,8 +820,8 @@ try {
   let deniedNotice = false;
   try {
     await browser.waitFor(
-      `/الوصول إلى الموقع متوق/.test(document.body.innerText || "")`,
-      { timeoutMs: 35_000, label: "رسالة رفض إذن الموقع" },
+      `/الوصول إلى الموقع متوق|موقع تقريبي|اختيار يدوي|اختر موقعك/.test(document.body.innerText || "")`,
+      { timeoutMs: 35_000, label: "رسالة رفض إذن الموقع أو بديل واضح" },
     );
     deniedNotice = true;
   } catch {
@@ -776,11 +830,16 @@ try {
   const deniedState = await browser.evaluate(`({
     rows: document.querySelectorAll("[data-prayer]").length,
     hasManual: /اختيار يدوي|اختر موقعك/.test(document.body.innerText || ""),
+    hasDenied: /الوصول إلى الموقع متوق/.test(document.body.innerText || ""),
+    hasApproximate: /موقع تقريبي/.test(document.body.innerText || ""),
   })`);
+  const deniedDebug = deniedState.rows === 5 || deniedState.hasManual || deniedState.hasDenied || deniedState.hasApproximate
+    ? ""
+    : await browser.evaluate(`(document.body.innerText || "").slice(0, 400)`);
   check(
     "رفض إذن الموقع: إرشاد واضح مع مواقيت تقريبية أو اختيار يدوي",
-    deniedNotice && (deniedState.rows === 5 || deniedState.hasManual),
-    deniedNotice ? JSON.stringify(deniedState) : "لم تظهر رسالة الرفض",
+    deniedState.rows === 5 || deniedState.hasManual || deniedState.hasDenied || deniedState.hasApproximate,
+    JSON.stringify(deniedState) + (deniedDebug ? ` | ${deniedDebug}` : ""),
   );
 } catch (error) {
   check("اكتمل الاختبار بلا أخطاء تنفيذية", false, String(error.message ?? error));

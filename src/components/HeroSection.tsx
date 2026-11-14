@@ -2,6 +2,7 @@ import { Box, Chip, Container, Stack, Typography } from "@mui/material";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import { IslamicPattern } from "./IslamicPattern";
 import { DEDICATED_PEOPLE } from "../constants/dedication";
+import { primaryText } from "../theme";
 
 /** قسم الهيرو الرئيسي — يوضّح الغرض والأسماء خلال ثوانٍ. */
 export function HeroSection() {
@@ -26,11 +27,16 @@ export function HeroSection() {
       <IslamicPattern opacity={0.07} />
       <Container maxWidth="md" sx={{ position: "relative", py: { xs: 5, md: 8 }, textAlign: "center" }}>
         <Chip
-          icon={<VolunteerActivismIcon />}
+          icon={<VolunteerActivismIcon aria-hidden />}
           label="صدقة جارية"
-          color="primary"
           variant="outlined"
-          sx={{ mb: 3, fontWeight: 700, bgcolor: "background.paper" }}
+          sx={{
+            mb: 3,
+            fontWeight: 700,
+            bgcolor: "background.paper",
+            color: (theme) => primaryText(theme.palette.mode),
+            borderColor: "currentColor",
+          }}
         />
 
         <Typography

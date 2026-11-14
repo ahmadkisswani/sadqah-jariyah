@@ -1,6 +1,6 @@
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import type { Ayah } from "../data/quran/types";
-import { fonts } from "../theme";
+import { fonts, primaryText } from "../theme";
 import { toArabicNumber } from "../utils/arabic";
 
 type Props = {
@@ -99,7 +99,12 @@ export function MushafPage({
           </Typography>
           <Typography
             variant="caption"
-            sx={{ fontFamily: fonts.naskh, fontWeight: 700, color: "primary.main", px: 1 }}
+            sx={{
+              fontFamily: fonts.naskh,
+              fontWeight: 700,
+              color: (theme) => primaryText(theme.palette.mode),
+              px: 1,
+            }}
           >
             سورة {surahName}
           </Typography>
@@ -221,14 +226,23 @@ export function MushafPage({
               >
                 <Box
                   component="span"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`تحديد الآية ${ayah.numberInSurah}`}
+                  aria-pressed={isSelected}
                   onClick={() => onSelectAyah(ayah.numberInSurah)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
+                    onSelectAyah(ayah.numberInSurah);
+                  }}
                   sx={{
                     cursor: "pointer",
                     px: "2px",
                     borderRadius: 1,
                     transition: "background-color .25s ease, color .25s ease",
                     backgroundColor: isPlaying ? highlight : isSelected ? "action.selected" : "transparent",
-                    color: isPlaying ? "primary.main" : "inherit",
+                    color: isPlaying ? (theme) => primaryText(theme.palette.mode) : "inherit",
                     "&:hover": { backgroundColor: "action.hover" },
                   }}
                 >
@@ -260,7 +274,7 @@ export function MushafPage({
                     border: `1px solid ${gold}`,
                     boxShadow: `inset 0 0 0 2px ${theme.palette.background.paper}, inset 0 0 0 3px ${hairline}`,
                     backgroundColor: isPlaying ? highlight : "transparent",
-                    color: isPlaying ? "primary.main" : "secondary.dark",
+                    color: isPlaying ? (theme) => primaryText(theme.palette.mode) : "secondary.dark",
                     transition: "transform .2s ease, background-color .2s ease",
                     "&:hover": { transform: "scale(1.08)" },
                   }}

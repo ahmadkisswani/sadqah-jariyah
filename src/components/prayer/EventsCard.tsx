@@ -23,7 +23,7 @@ export function EventsCard({ lang, events, loading, limit = 4 }: Props) {
     <Stack component="section" aria-label={STRINGS.events.ar} spacing={1.5}>
       <Stack direction="row" spacing={1} alignItems="center">
         <EventIcon fontSize="small" color="secondary" />
-        <Typography variant="h6" component="h3" sx={{ fontWeight: 800 }}>
+        <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
           {STRINGS.events[lang]}
         </Typography>
       </Stack>

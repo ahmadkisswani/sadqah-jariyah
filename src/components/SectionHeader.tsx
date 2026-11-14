@@ -6,10 +6,21 @@ type Props = {
   subtitle?: string;
   action?: ReactNode;
   align?: "center" | "start";
+  /** مستوى العنوان الدلالي — الرئيسي للصفحة h1، والأقسام الفرعية h2/h3. */
+  level?: "h1" | "h2" | "h3";
+  /** معرّف يُستخدم مع aria-labelledby في القسم الأب. */
+  id?: string;
 };
 
 /** عنوان قسم متسامق — نص + سطر ذهبي رفيع + عنوان فرعي اختياري. */
-export function SectionHeader({ title, subtitle, action, align = "center" }: Props) {
+export function SectionHeader({
+  title,
+  subtitle,
+  action,
+  align = "center",
+  level = "h2",
+  id,
+}: Props) {
   return (
     <Box
       sx={{
@@ -23,7 +34,7 @@ export function SectionHeader({ title, subtitle, action, align = "center" }: Pro
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap", justifyContent: align === "center" ? "center" : "flex-start", width: "100%" }}>
-        <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
+        <Typography id={id} variant="h4" component={level} sx={{ fontWeight: 700 }}>
           {title}
         </Typography>
         {action}

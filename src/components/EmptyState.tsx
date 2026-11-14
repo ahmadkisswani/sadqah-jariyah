@@ -20,10 +20,19 @@ type Props = {
   description?: string;
   actionLabel?: string;
   actionTo?: string;
+  /** عند استخدام الحالة كعنوان الصفحة الأساسي. */
+  titleComponent?: "p" | "h1" | "h2" | "h3";
 };
 
 /** حالة فارغة/خطأ أنيقة مع إجراء تعافي واضح. */
-export function EmptyState({ kind = "empty", title, description, actionLabel, actionTo }: Props) {
+export function EmptyState({
+  kind = "empty",
+  title,
+  description,
+  actionLabel,
+  actionTo,
+  titleComponent = "p",
+}: Props) {
   const navigate = useNavigate();
   const preset = PRESETS[kind];
   const Icon = preset.icon;
@@ -44,7 +53,7 @@ export function EmptyState({ kind = "empty", title, description, actionLabel, ac
       }}
     >
       <Icon sx={{ fontSize: 48, color: "text.secondary", opacity: 0.7 }} />
-      <Typography variant="h6" component="p">
+      <Typography variant={titleComponent === "h1" ? "h4" : "h6"} component={titleComponent} sx={titleComponent === "h1" ? { fontWeight: 800 } : undefined}>
         {title ?? preset.title}
       </Typography>
       {description && (

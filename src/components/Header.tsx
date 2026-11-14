@@ -23,6 +23,7 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 import { NAV_ITEMS, BOOKMARKS_ITEM, isActivePath } from "./navItems";
 import { IslamicPattern } from "./IslamicPattern";
 import { PROJECT_NAME, DEDICATED_PEOPLE } from "../constants/dedication";
+import { primaryText } from "../theme";
 
 type Props = { mode: "light" | "dark"; onToggleMode: () => void };
 
@@ -92,7 +93,7 @@ export function Header({ mode, onToggleMode }: Props) {
             <Box sx={{ lineHeight: 1.15, minWidth: 0 }}>
               <Typography
                 variant="subtitle1"
-                sx={{ fontWeight: 800, color: "primary.main", whiteSpace: "nowrap" }}
+                sx={{ fontWeight: 800, color: "text.primary", whiteSpace: "nowrap" }}
               >
                 {PROJECT_NAME}
               </Typography>
@@ -122,7 +123,7 @@ export function Header({ mode, onToggleMode }: Props) {
                       py: 1,
                       px: 1.5,
                       fontWeight: active ? 800 : 600,
-                      color: active ? "primary.main" : "text.secondary",
+                      color: active ? (theme) => primaryText(theme.palette.mode) : "text.secondary",
                       position: "relative",
                       "&::after": active
                         ? {
@@ -149,7 +150,12 @@ export function Header({ mode, onToggleMode }: Props) {
           <Box sx={{ flexGrow: isDesktop ? 0 : 1 }} />
 
           <Tooltip title={modeLabel}>
-            <IconButton onClick={onToggleMode} aria-label={modeLabel} color="primary" size="large">
+            <IconButton
+              onClick={onToggleMode}
+              aria-label={modeLabel}
+              size="large"
+              sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+            >
               <ModeIcon />
             </IconButton>
           </Tooltip>
@@ -166,7 +172,7 @@ export function Header({ mode, onToggleMode }: Props) {
         <Box sx={{ position: "relative", overflow: "hidden" }}>
           <IslamicPattern opacity={0.05} />
           <Toolbar sx={{ justifyContent: "space-between" }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: "primary.main" }}>
+            <Typography variant="h6" component="p" sx={{ fontWeight: 800, color: "text.primary" }}>
               {PROJECT_NAME}
             </Typography>
             <IconButton aria-label="إغلاق القائمة" onClick={() => setDrawerOpen(false)} size="large">
@@ -188,7 +194,12 @@ export function Header({ mode, onToggleMode }: Props) {
                   aria-current={active ? "page" : undefined}
                   sx={{ borderRadius: 2, mb: 0.5, minHeight: 52 }}
                 >
-                  <ListItemIcon sx={{ minWidth: 42, color: active ? "primary.main" : "text.secondary" }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 42,
+                      color: active ? (theme) => primaryText(theme.palette.mode) : "text.secondary",
+                    }}
+                  >
                     <Icon />
                   </ListItemIcon>
                   <ListItemText

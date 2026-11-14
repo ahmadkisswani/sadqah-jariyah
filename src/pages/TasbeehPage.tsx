@@ -1,15 +1,13 @@
 import { Stack, Typography } from "@mui/material";
 import { TasbeehCounter } from "../components/TasbeehCounter";
 import { SectionHeader } from "../components/SectionHeader";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { fonts } from "../theme";
 
 export default function TasbeehPage() {
-  usePageTitle("التسبيح");
-
   return (
     <Stack spacing={4} alignItems="center">
       <SectionHeader
+        level="h1"
         title="التسبيح"
         subtitle="عدّاد تسبيح بأهداف قابلة للضبط، يُحفظ تقدّمك تلقائيًا."
       />

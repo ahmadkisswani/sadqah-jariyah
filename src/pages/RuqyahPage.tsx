@@ -17,14 +17,12 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { ruqyahVerses, ruqyahDuas, ruqyahAudio, type RuqyahItem } from "../data/ruqyah";
 import { SectionHeader } from "../components/SectionHeader";
 import { ShareButton, CopyButton } from "../components/ShareButton";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { useSnack } from "../hooks/useSnack";
-import { fonts } from "../theme";
+import { fonts, primaryText } from "../theme";
 import { withDedication } from "../constants/dedication";
 import { toArabicNumber } from "../utils/arabic";
 
 export default function RuqyahPage() {
-  usePageTitle("الرقية الشرعية");
   // تسجيل واحد فقط يُشغَّل في كل مرة: عند تشغيل تسجيل جديد يُزال المشغّل السابق
   // من الصفحة تمامًا (لا يمكن إيقاف مشغّل خارجي مستضاف عبر iframe بغير إزالته).
   const [activeAudioId, setActiveAudioId] = useState<string | null>(null);
@@ -32,6 +30,7 @@ export default function RuqyahPage() {
   return (
     <Stack spacing={4}>
       <SectionHeader
+        level="h1"
         title="الرقية الشرعية"
         subtitle="آيات من القرآن الكريم وأدعية مأثورة تُقرأ ضمن الرقية."
       />
@@ -47,7 +46,7 @@ export default function RuqyahPage() {
 
       {/* الآيات */}
       <Box component="section" aria-labelledby="ruqyah-verses">
-        <SectionHeader title="آيات من القرآن الكريم" align="start" />
+        <SectionHeader id="ruqyah-verses" title="آيات من القرآن الكريم" align="start" />
         <Stack spacing={2}>
           {ruqyahVerses.map((item, i) => (
             <RuqyahBlock key={item.id} item={item} index={i} actionLabel="نسخ الآيات" />
@@ -59,7 +58,7 @@ export default function RuqyahPage() {
 
       {/* الأدعية */}
       <Box component="section" aria-labelledby="ruqyah-duas">
-        <SectionHeader title="أدعية مأثورة" align="start" />
+        <SectionHeader id="ruqyah-duas" title="أدعية مأثورة" align="start" />
         <Stack spacing={2}>
           {ruqyahDuas.map((item, i) => (
             <RuqyahBlock key={item.id} item={item} index={i} actionLabel="نسخ الدعاء" />
@@ -72,6 +71,7 @@ export default function RuqyahPage() {
       {/* الاستماع */}
       <Box component="section" aria-labelledby="ruqyah-audio">
         <SectionHeader
+          id="ruqyah-audio"
           title="الاستماع إلى الرقية الشرعية"
           align="start"
           subtitle="تتطلب هذه التسجيلات اتصالًا بالإنترنت، ويُشغَّل تسجيل واحد في كل مرة."
@@ -99,7 +99,16 @@ function RuqyahBlock({ item, index, actionLabel }: { item: RuqyahItem; index: nu
   return (
     <Paper component="article" sx={{ p: { xs: 2.5, sm: 3 }, border: "1px solid", borderColor: "divider" }}>
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" gap={1}>
-        <Chip label={toArabicNumber(index + 1)} size="small" color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
+        <Chip
+          label={toArabicNumber(index + 1)}
+          size="small"
+          variant="outlined"
+          sx={{
+            fontWeight: 700,
+            color: (theme) => primaryText(theme.palette.mode),
+            borderColor: "currentColor",
+          }}
+        />
         <Typography variant="h6" component="h3" sx={{ fontWeight: 700 }}>
           {item.title}
         </Typography>
@@ -149,7 +158,7 @@ function AudioCard({ title, reciter, url, active, onPlay, onStop }: AudioCardPro
             height: 46,
             borderRadius: "14px",
             bgcolor: active ? "rgba(201,162,75,0.18)" : "rgba(31,93,76,0.10)",
-            color: active ? "secondary.dark" : "primary.main",
+            color: active ? "secondary.dark" : (theme) => primaryText(theme.palette.mode),
             display: "grid",
             placeItems: "center",
             flexShrink: 0,
@@ -189,7 +198,9 @@ function AudioCard({ title, reciter, url, active, onPlay, onStop }: AudioCardPro
             src={url}
             title={`${title} — ${reciter}`}
             loading="lazy"
-            allow="autoplay"
+            referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            allow="autoplay; encrypted-media; fullscreen"
             sx={{ width: "100%", height: 300, border: 0, display: "block" }}
           />
         </Box>

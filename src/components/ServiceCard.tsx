@@ -3,6 +3,7 @@ import { Card, CardActionArea, CardContent, Box, Typography } from "@mui/materia
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link as RouterLink } from "react-router-dom";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { primaryText } from "../theme";
 
 type Props = {
   icon: SvgIconComponent;
@@ -25,7 +26,10 @@ export function ServiceCard({ icon: Icon, title, description, to, accent = "prim
               height: 52,
               borderRadius: "16px",
               bgcolor: accent === "primary" ? "rgba(31,93,76,0.10)" : "rgba(201,162,75,0.16)",
-              color: accent === "primary" ? "primary.main" : "secondary.dark",
+              color:
+                accent === "primary"
+                  ? (theme) => primaryText(theme.palette.mode)
+                  : "secondary.dark",
               display: "grid",
               placeItems: "center",
             }}
@@ -38,7 +42,15 @@ export function ServiceCard({ icon: Icon, title, description, to, accent = "prim
           <Typography color="text.secondary" variant="body2" sx={{ flexGrow: 1 }}>
             {description}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "primary.main", fontWeight: 700 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              color: (theme) => primaryText(theme.palette.mode),
+              fontWeight: 700,
+            }}
+          >
             <Typography variant="button">دخول</Typography>
             <ArrowBackIcon fontSize="small" />
           </Box>

@@ -135,7 +135,7 @@ export function MonthCalendar({
         rowGap={1}
       >
         <Box>
-          <Typography variant="h6" component="p" sx={{ fontWeight: 800 }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
             {formatMonthTitle(viewYear, viewMonth, lang)}
           </Typography>
           {hijriHeader ? (
@@ -248,7 +248,7 @@ export function MonthCalendar({
                       "&:hover": { bgcolor: "action.hover" },
                       "&:focus-visible": {
                         outline: "2px solid",
-                        outlineColor: "primary.main",
+                        outlineColor: "secondary.dark",
                         outlineOffset: 2,
                       },
                     }}

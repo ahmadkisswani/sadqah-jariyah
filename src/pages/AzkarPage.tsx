@@ -14,13 +14,11 @@ import ReplayIcon from "@mui/icons-material/Replay";
 import { azkarCategories, getAzkarCategory } from "../data/azkar";
 import { DhikrCard } from "../components/DhikrCard";
 import { SectionHeader } from "../components/SectionHeader";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { toArabicNumber } from "../utils/arabic";
 
 const DEFAULT_CATEGORY = azkarCategories[0].id;
 
 export default function AzkarPage() {
-  usePageTitle("الأذكار");
   const theme = useTheme();
   const [activeId, setActiveId] = useState(DEFAULT_CATEGORY);
   const category = getAzkarCategory(activeId) ?? azkarCategories[0];
@@ -85,18 +83,18 @@ export default function AzkarPage() {
   return (
     <Stack spacing={4}>
       <SectionHeader
+        level="h1"
         title="الأذكار"
         subtitle="أذكار الصباح والمساء والنوم وبعد الصلاة، مع عدّاد مريح وحفظ للتقدّم."
       />
 
       {/* اختيار الفئة */}
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap role="tablist" aria-label="فئات الأذكار">
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap role="group" aria-label="فئات الأذكار">
         {azkarCategories.map((c) => (
           <Chip
             key={c.id}
             label={c.title}
-            role="tab"
-            aria-selected={c.id === activeId}
+            aria-pressed={c.id === activeId}
             onClick={() => setActiveId(c.id)}
             color={c.id === activeId ? "primary" : "default"}
             variant={c.id === activeId ? "filled" : "outlined"}
@@ -110,7 +108,7 @@ export default function AzkarPage() {
         <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
                 {category.title}
               </Typography>
               <Typography variant="body2" color="text.secondary">

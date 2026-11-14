@@ -6,19 +6,17 @@ import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
 import { ShareButton, CopyButton } from "../components/ShareButton";
 import { useBookmarks } from "../hooks/useBookmarks";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { fonts } from "../theme";
 import { toArabicNumber } from "../utils/arabic";
 import { withDedication } from "../constants/dedication";
 
 export default function BookmarksPage() {
-  usePageTitle("المحفوظات");
   const { bookmarks, remove, clear } = useBookmarks();
 
   return (
     <Stack spacing={4}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
-        <SectionHeader title="الآيات المحفوظة" align="start" />
+        <SectionHeader level="h1" title="الآيات المحفوظة" align="start" />
         {bookmarks.length > 0 && (
           <Button onClick={clear} color="error" variant="outlined" startIcon={<DeleteOutlineIcon />}>
             حذف الكل

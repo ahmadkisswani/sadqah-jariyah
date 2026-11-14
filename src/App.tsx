@@ -4,6 +4,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useThemeMode } from "./theme/useThemeMode";
 import { SnackProvider } from "./hooks/useSnack";
 import { AppLayout } from "./components/AppLayout";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import HomePage from "./pages/HomePage";
 
 // تحميل كسول للصفحات الأكبر — الرئيسية تُحمّل مباشرة لسرعة أول رسم
@@ -14,6 +15,7 @@ const TasbeehPage = lazy(() => import("./pages/TasbeehPage"));
 const RuqyahPage = lazy(() => import("./pages/RuqyahPage"));
 const DailyPage = lazy(() => import("./pages/DailyPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
 const PrayerTimesPage = lazy(() => import("./pages/PrayerTimesPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
@@ -26,24 +28,27 @@ export default function App() {
       <CssBaseline />
       <SnackProvider>
         <BrowserRouter>
-          <Routes>
-            <Route
-              element={<AppLayout mode={mode} onToggleMode={toggleMode} />}
-            >
-              <Route path="/" element={<HomePage />} />
-              <Route path="/quran" element={<QuranPage />} />
-              <Route path="/quran/:surahNumber" element={<QuranPage />} />
-              <Route path="/azkar" element={<AzkarPage />} />
-              <Route path="/duas" element={<DuasPage />} />
-              <Route path="/tasbeeh" element={<TasbeehPage />} />
-              <Route path="/ruqyah" element={<RuqyahPage />} />
-              <Route path="/daily" element={<DailyPage />} />
-              <Route path="/prayer-times" element={<PrayerTimesPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/bookmarks" element={<BookmarksPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
+          <AppErrorBoundary>
+            <Routes>
+              <Route
+                element={<AppLayout mode={mode} onToggleMode={toggleMode} />}
+              >
+                <Route path="/" element={<HomePage />} />
+                <Route path="/quran" element={<QuranPage />} />
+                <Route path="/quran/:surahNumber" element={<QuranPage />} />
+                <Route path="/azkar" element={<AzkarPage />} />
+                <Route path="/duas" element={<DuasPage />} />
+                <Route path="/tasbeeh" element={<TasbeehPage />} />
+                <Route path="/ruqyah" element={<RuqyahPage />} />
+                <Route path="/daily" element={<DailyPage />} />
+                <Route path="/prayer-times" element={<PrayerTimesPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/bookmarks" element={<BookmarksPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </AppErrorBoundary>
         </BrowserRouter>
       </SnackProvider>
     </ThemeProvider>

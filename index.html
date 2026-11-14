@@ -3,14 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1F5D4C" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#1F5D4C" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F1F1A" media="(prefers-color-scheme: dark)" />
 
-    <title>صدقة جارية | عن توبة عبد العزيز الجربوعه ومحمد احمد مسلم</title>
+    <title>صدقة جارية | القرآن الكريم والأذكار والأدعية ومواقيت الصلاة</title>
     <meta
       name="description"
-      content="صدقة جارية رقمية هادئة مكرَّسة لروح توبة عبد العزيز الجربوعه ومحمد احمد مسلم: قراءة القرآن الكريم، الأذكار، الأدعية، التسبيح، والرقية الشرعية."
+      content="صدقة جارية رقمية هادئة: اقرأ القرآن الكريم، وتابع الأذكار والأدعية، وسبّح، واطّلع على مواقيت الصلاة والرقية الشرعية. مكرَّسة لروح توبة عبد العزيز الجربوعه ومحمد احمد مسلم."
     />
-    <link rel="canonical" href="https://sadqah-jariyah.pages.dev/" />
+    <link rel="canonical" href="%SITE_URL%/" />
 
     <meta name="robots" content="index, follow" />
 
@@ -18,29 +20,64 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ar_AR" />
     <meta property="og:site_name" content="صدقة جارية" />
-    <meta property="og:title" content="صدقة جارية | عن توبة عبد العزيز الجربوعه ومحمد احمد مسلم" />
+    <meta property="og:title" content="صدقة جارية | القرآن الكريم والأذكار والأدعية ومواقيت الصلاة" />
     <meta
       property="og:description"
-      content="موقع إسلامي مكرَّس لروح توبة عبد العزيز الجربوعه ومحمد احمد مسلم: قراءة القرآن الكريم، الأذكار، الأدعية، التسبيح، والرقية الشرعية."
+      content="صدقة جارية رقمية هادئة: قرآن كريم، أذكار وأدعية، تسبيح، مواقيت الصلاة، ورقية شرعية. مكرَّسة لروح توبة عبد العزيز الجربوعه ومحمد احمد مسلم."
     />
-    <meta property="og:url" content="https://sadqah-jariyah.pages.dev/" />
-    <meta property="og:image" content="https://sadqah-jariyah.pages.dev/icons/social-preview.png" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/icons/social-preview.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="صدقة جارية — قرآن وأذكار وأدعية" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="صدقة جارية | عن توبة عبد العزيز الجربوعه ومحمد احمد مسلم" />
+    <meta name="twitter:title" content="صدقة جارية | القرآن الكريم والأذكار والأدعية ومواقيت الصلاة" />
     <meta
       name="twitter:description"
-      content="موقع إسلامي مكرَّس لروح توبة عبد العزيز الجربوعه ومحمد احمد مسلم."
+      content="قرآن كريم، أذكار وأدعية، تسبيح، مواقيت الصلاة، ورقية شرعية — صدقة جارية عن توبة عبد العزيز الجربوعه ومحمد احمد مسلم."
     />
-    <meta name="twitter:image" content="https://sadqah-jariyah.pages.dev/icons/social-preview.png" />
+    <meta name="twitter:image" content="%SITE_URL%/icons/social-preview.png" />
+    <meta name="twitter:image:alt" content="صدقة جارية — قرآن وأذكار وأدعية" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <!-- تسريع الاتصال بخدمة مواقيت الصلاة (AlAdhan) — لا مفاتيح ولا تتبّع -->
-    <link rel="preconnect" href="https://api.aladhan.com" crossorigin />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="صدقة جارية" />
+
+    <!--
+      وضع اللون قبل تحميل React حتى لا تومض الصفحة بالفاتح لمن اختار الداكن.
+      ملف خارجي صغير (بدل inline) ليبقى CSP صارمًا بلا unsafe-inline للسكربتات.
+    -->
+    <script src="/theme-init.js"></script>
+
+    <script type="application/ld+json" id="sj-page-jsonld">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "%SITE_URL%/#website",
+            "url": "%SITE_URL%/",
+            "name": "صدقة جارية",
+            "inLanguage": "ar",
+            "description": "قرآن كريم وأذكار وأدعية وتسبيح ومواقيت الصلاة والرقية الشرعية."
+          },
+          {
+            "@type": "WebPage",
+            "@id": "%SITE_URL%/#webpage",
+            "url": "%SITE_URL%/",
+            "name": "صدقة جارية | القرآن الكريم والأذكار والأدعية ومواقيت الصلاة",
+            "description": "صدقة جارية رقمية هادئة: قرآن كريم، أذكار وأدعية، تسبيح، مواقيت الصلاة، ورقية شرعية.",
+            "inLanguage": "ar",
+            "isPartOf": { "@id": "%SITE_URL%/#website" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

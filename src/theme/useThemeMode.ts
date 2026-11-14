@@ -25,6 +25,10 @@ export function useThemeMode() {
       /* storage unavailable */
     }
     document.documentElement.style.colorScheme = mode;
+    const themeColor = mode === "dark" ? "#0F1F1A" : "#1F5D4C";
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute("content", themeColor);
+    });
   }, [mode]);
 
   const toggleMode = useCallback(() => {

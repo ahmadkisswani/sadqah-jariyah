@@ -1,20 +1,32 @@
-import { PROJECT_NAME, DEDICATION_BLOCK } from "../constants/dedication";
+import { PROJECT_NAME } from "../constants/dedication";
 
 export type ShareResult = "shared" | "copied" | "dismissed" | "failed";
 
+/** نص النسخ الاحتياطي عند غياب Web Share: النص + رابط الصفحة الحالية. */
+export function buildCopyPayload(text: string, url?: string): string {
+  return url ? `${text}\n\n${url}` : text;
+}
+
 /**
  * يحاول المشاركة عبر Web Share API، وإن لم يتوفّر ينسخ النص إلى الحافظة.
- * يعيد الحالة لتعرضها في Snackbar.
+ * النص يصل جاهزًا من المستدعي (بما فيه كتلة الوقف) — لا نضيفها هنا مرة ثانية.
  */
 export async function shareText(text: string): Promise<ShareResult> {
-  const payload = `${text}\n\n${DEDICATION_BLOCK}`;
+  const pageUrl =
+    typeof window === "undefined"
+      ? ""
+      : `${window.location.origin}${window.location.pathname}`;
   const nav = navigator as Navigator & {
     share?: (data: ShareData) => Promise<void>;
   };
 
   if (nav.share) {
     try {
-      await nav.share({ text: payload, title: PROJECT_NAME });
+      await nav.share({
+        text,
+        title: PROJECT_NAME,
+        ...(pageUrl ? { url: pageUrl } : {}),
+      });
       return "shared";
     } catch (err) {
       // المستخدم أغلق لوحة المشاركة — ليس خطأ
@@ -22,7 +34,7 @@ export async function shareText(text: string): Promise<ShareResult> {
     }
   }
 
-  return copyText(payload);
+  return copyText(buildCopyPayload(text, pageUrl));
 }
 
 /** ينسخ نصًا إلى الحافظة مع تراجع آمن عبر textarea إن لم يعمل Clipboard API. */

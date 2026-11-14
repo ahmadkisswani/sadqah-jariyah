@@ -10,6 +10,7 @@ import { peekDayTimings } from "../../data/prayer/api";
 import { defaultMethodFor } from "../../data/prayer/methods";
 import { STRINGS, prayerLabel } from "../../data/prayer/labels";
 import { findCurrentAndNext, formatClock, formatCountdownShort, todayKeyIn } from "../../utils/prayer";
+import { primaryText } from "../../theme";
 
 /**
  * مدخل الصفحة الرئيسية إلى المواقيت — بلا أي طلب شبكة ولا طلب إذن.
@@ -78,12 +79,16 @@ export function PrayerEntryStrip() {
         borderColor: "divider",
         p: { xs: 2, md: 2.5 },
         transition: "border-color 160ms ease, transform 160ms ease",
-        "&:hover": { borderColor: "primary.main" },
-        "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+        "&:hover": { borderColor: (theme) => primaryText(theme.palette.mode) },
+        "&:focus-visible": { outline: "2px solid", outlineColor: "secondary.dark", outlineOffset: 2 },
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="center">
-        <MosqueIcon color="primary" fontSize="large" />
+        <MosqueIcon
+          aria-hidden
+          fontSize="large"
+          sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+        />
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" rowGap={0.5}>
             <Typography variant="subtitle1" component="p" sx={{ fontWeight: 800 }}>

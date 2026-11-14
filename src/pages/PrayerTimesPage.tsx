@@ -26,17 +26,18 @@ import {
   PrayerSettingsCard,
   settingsLocationLabel,
 } from "../components/prayer/PrayerSettingsCard";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { useNow } from "../hooks/useNow";
 import { usePrayerSettings } from "../hooks/usePrayerSettings";
 import { useLocationResolver } from "../hooks/useLocationResolver";
 import { usePrayerTimes } from "../hooks/usePrayerTimes";
 import { useMonthCalendar } from "../hooks/useMonthCalendar";
 import { useIslamicEvents } from "../hooks/useIslamicEvents";
+import { useNearViewport } from "../hooks/useNearViewport";
 import { defaultMethodFor, methodName } from "../data/prayer/methods";
 import { OBLIGATORY_PRAYERS, STRINGS, prayerLabel } from "../data/prayer/labels";
 import { describeApiError } from "../data/prayer/api";
 import { withDedication } from "../constants/dedication";
+import { primaryText } from "../theme";
 import {
   buildPrayerRows,
   findCurrentAndNext,
@@ -48,8 +49,6 @@ import {
 
 /** صفحة مواقيت الصلاة والتقويم الهجري. */
 export default function PrayerTimesPage() {
-  usePageTitle("مواقيت الصلاة — Prayer Times");
-
   const { settings, update, reset } = usePrayerSettings();
   const lang = settings.lang;
   const timeFormat = settings.timeFormat;
@@ -57,6 +56,8 @@ export default function PrayerTimesPage() {
 
   const resolver = useLocationResolver({ location, onChange: update });
   const now = useNow(1000);
+  const eventsSection = useNearViewport<HTMLDivElement>("320px");
+  const calendarSection = useNearViewport<HTMLDivElement>("320px");
 
   /** المنطقة الزمنية تأتي من ردّ الخدمة (لا نفترضها) — ثم يُضبط مفتاح اليوم بها. */
   const [resolvedTimezone, setResolvedTimezone] = useState<string | null>(null);
@@ -92,8 +93,17 @@ export default function PrayerTimesPage() {
   const ramadanWindow = useMemo(() => ramadanWindows(times.days, now), [times.days, now]);
 
   const hijriYear = times.today?.hijri.year ?? null;
-  const { events } = useIslamicEvents({ location, hijriYear, todayKey });
-  const inRamadan = times.today?.hijri.month === 9;
+  const hijriMonth = times.today?.hijri.month ?? null;
+  const hijriDay = times.today?.hijri.day ?? null;
+  const { events, loading: eventsLoading } = useIslamicEvents({
+    location,
+    hijriYear,
+    hijriMonth,
+    hijriDay,
+    todayKey,
+    enabled: eventsSection.near,
+  });
+  const inRamadan = hijriMonth === 9;
   const ramadanEvent = events?.find((event) => event.key === "ramadan") ?? null;
   const visibleEvents = useMemo(
     () => (inRamadan ? (events ?? []).filter((event) => event.key !== "ramadan") : events),
@@ -109,7 +119,7 @@ export default function PrayerTimesPage() {
     location,
     viewYear: view.year,
     viewMonth: view.month,
-    enabled: Boolean(location),
+    enabled: Boolean(location) && calendarSection.near,
   });
 
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
@@ -156,6 +166,7 @@ export default function PrayerTimesPage() {
   return (
     <Stack spacing={4}>
       <SectionHeader
+        level="h1"
         title={STRINGS.pageTitle[lang]}
         subtitle={STRINGS.pageSubtitle[lang]}
         action={times.today ? <ShareButton text={shareText} size="small" /> : undefined}
@@ -197,7 +208,10 @@ export default function PrayerTimesPage() {
         >
           <Stack spacing={1.5} alignItems="flex-start">
             <Stack direction="row" spacing={1} alignItems="center">
-              <MosqueIcon color="primary" />
+              <MosqueIcon
+                aria-hidden
+                sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+              />
               <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
                 {STRINGS.location[lang]}
               </Typography>
@@ -308,25 +322,31 @@ export default function PrayerTimesPage() {
             </Stack>
           </Box>
 
-          <RamadanCard
-            lang={lang}
-            timeFormat={timeFormat}
-            hijri={times.today?.hijri ?? null}
-            today={times.today}
-            window={ramadanWindow}
-            daysUntilRamadan={ramadanEvent ? ramadanEvent.daysUntil : null}
-            ramadanStartKey={ramadanEvent ? ramadanEvent.dateKey : null}
-          />
+          <Stack ref={eventsSection.ref} spacing={3}>
+            <RamadanCard
+              lang={lang}
+              timeFormat={timeFormat}
+              hijri={times.today?.hijri ?? null}
+              today={times.today}
+              window={ramadanWindow}
+              daysUntilRamadan={ramadanEvent ? ramadanEvent.daysUntil : null}
+              ramadanStartKey={ramadanEvent ? ramadanEvent.dateKey : null}
+            />
 
-          <EventsCard lang={lang} events={visibleEvents} loading={!visibleEvents} />
+            <EventsCard
+              lang={lang}
+              events={visibleEvents}
+              loading={!eventsSection.near || eventsLoading}
+            />
+          </Stack>
 
-          <Box id="sj-calendar" sx={{ scrollMarginTop: 88 }}>
+          <Box ref={calendarSection.ref} id="sj-calendar" sx={{ scrollMarginTop: 88 }}>
             <MonthCalendar
               lang={lang}
               timeFormat={timeFormat}
               todayKey={todayKey}
               calendar={month.calendar}
-              loading={month.loading}
+              loading={!calendarSection.near || month.loading}
               error={month.error ? describeApiError(month.error) : null}
               isCurrent={month.isCurrent}
               viewYear={view.year}

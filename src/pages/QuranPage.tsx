@@ -4,11 +4,11 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Divider,
   IconButton,
   InputAdornment,
   Paper,
+  Skeleton,
   Slider,
   Stack,
   TextField,
@@ -38,12 +38,11 @@ import { MushafPage } from "../components/MushafPage";
 import { QuranAudioBar } from "../components/QuranAudioBar";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { useBookmarks } from "../hooks/useBookmarks";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useSnack } from "../hooks/useSnack";
 import { useQuranAudio, type AudioTarget } from "../hooks/useQuranAudio";
-import { fonts } from "../theme";
+import { fonts, primaryText } from "../theme";
 import { toArabicNumber } from "../utils/arabic";
 
 /** طرق العرض: صفحات مصحف حقيقية، السورة كاملة في صفحة واحدة، أو بطاقة لكل آية. */
@@ -51,18 +50,31 @@ type ViewMode = "pages" | "flow" | "cards";
 
 export default function QuranPage() {
   const { surahNumber } = useParams<{ surahNumber?: string }>();
-  const number = surahNumber ? Number(surahNumber) : undefined;
 
-  if (number && Number.isFinite(number)) {
-    return <QuranReader number={number} />;
+  if (surahNumber === undefined) return <SurahIndex />;
+
+  const number = Number(surahNumber);
+  if (!Number.isInteger(number) || number < 1 || number > 114) {
+    return (
+      <Stack spacing={2} sx={{ py: 6 }}>
+        <EmptyState
+          kind="error"
+          titleComponent="h1"
+          title="لم نجد هذه السورة"
+          description="رقم السورة يجب أن يكون بين ١ و١١٤. يمكنك العودة إلى فهرس السور."
+          actionLabel="الرجوع إلى فهرس السور"
+          actionTo="/quran"
+        />
+      </Stack>
+    );
   }
-  return <SurahIndex />;
+
+  return <QuranReader number={number} />;
 }
 
 /* ---------------------------------- الفهرس ---------------------------------- */
 
 function SurahIndex() {
-  usePageTitle("القرآن الكريم");
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [lastRead, setLastRead] = useLocalStorage<{ surah: number; ayah: number } | null>(
@@ -87,6 +99,7 @@ function SurahIndex() {
   return (
     <Stack spacing={4}>
       <SectionHeader
+        level="h1"
         title="القرآن الكريم"
         subtitle="اقرأ كتاب الله بتدبّر وطمأنينة، واحفظ الآيات وشاركها."
       />
@@ -94,7 +107,7 @@ function SurahIndex() {
       {lastRead && (
         <Paper sx={{ p: 2, border: "1px solid", borderColor: "divider", display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <MenuBookIcon color="primary" />
+            <MenuBookIcon color="primary" aria-hidden />
             <Box>
               <Typography sx={{ fontWeight: 700 }}>متابعة القراءة</Typography>
               <Typography variant="body2" color="text.secondary">
@@ -168,7 +181,7 @@ function SurahIndex() {
                   flexShrink: 0,
                   borderRadius: "12px",
                   bgcolor: "rgba(31,93,76,0.10)",
-                  color: "primary.main",
+                  color: (theme) => primaryText(theme.palette.mode),
                   display: "grid",
                   placeItems: "center",
                   fontWeight: 800,
@@ -196,7 +209,6 @@ function SurahIndex() {
 
 function QuranReader({ number }: { number: number }) {
   const meta = SURAHS.find((s) => s.number === number);
-  usePageTitle(meta ? `سورة ${meta.name}` : "القرآن الكريم");
   const navigate = useNavigate();
   const location = useLocation();
   const snack = useSnack();
@@ -524,9 +536,21 @@ function QuranReader({ number }: { number: number }) {
       )}
 
       {loading && (
-        <Box sx={{ display: "grid", placeItems: "center", py: 8 }}>
-          <CircularProgress aria-label="جارٍ تحميل السورة" />
-        </Box>
+        <Stack
+          spacing={2}
+          aria-busy="true"
+          aria-label="جارٍ تحميل السورة"
+          sx={{ py: 1 }}
+        >
+          {[0, 1, 2].map((item) => (
+            <Skeleton
+              key={item}
+              variant="rounded"
+              height={item === 0 ? 260 : 180}
+              sx={{ borderRadius: 3, bgcolor: "action.hover" }}
+            />
+          ))}
+        </Stack>
       )}
 
       {error && !loading && (

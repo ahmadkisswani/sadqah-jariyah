@@ -33,6 +33,7 @@ import {
 import { OBLIGATORY_PRAYERS, STRINGS, prayerLabel, type Lang } from "../../data/prayer/labels";
 import { clearPrayerCache } from "../../data/prayer/api";
 import type { PrayerSettings } from "../../hooks/usePrayerSettings";
+import { primaryText } from "../../theme";
 
 type Props = {
   lang: Lang;
@@ -81,8 +82,12 @@ export function PrayerSettingsCard({
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />} id="sj-prayer-settings">
         <Stack direction="row" spacing={1} alignItems="center">
-          <SettingsIcon fontSize="small" color="primary" />
-          <Typography variant="h6" component="h3" sx={{ fontWeight: 800 }}>
+          <SettingsIcon
+            fontSize="small"
+            aria-hidden
+            sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+          />
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
             {STRINGS.settings[lang]}
           </Typography>
         </Stack>

@@ -25,7 +25,7 @@ import { CopyButton, ShareButton } from "./ShareButton";
 import { RECITERS, type Reciter } from "../data/quran/reciters";
 import type { AudioStatus } from "../hooks/useQuranAudio";
 import { setSnackBottomOffset } from "../hooks/useSnack";
-import { fonts } from "../theme";
+import { fonts, primaryText } from "../theme";
 import { toArabicNumber } from "../utils/arabic";
 import { withDedication } from "../constants/dedication";
 
@@ -133,9 +133,12 @@ export function QuranAudioBar({
           <Tooltip title={isActive ? "إيقاف مؤقت" : "تشغيل الآية"}>
             <IconButton
               onClick={onTogglePlay}
-              color="primary"
               aria-label={isActive ? "إيقاف مؤقت للتلاوة" : "تشغيل التلاوة"}
-              sx={{ bgcolor: "action.selected", "&:hover": { bgcolor: "action.selected" } }}
+              sx={{
+                bgcolor: "action.selected",
+                color: (theme) => primaryText(theme.palette.mode),
+                "&:hover": { bgcolor: "action.selected" },
+              }}
             >
               {status === "loading" ? (
                 <CircularProgress size={20} aria-label="جارٍ تحميل التلاوة" />

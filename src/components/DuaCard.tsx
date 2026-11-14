@@ -1,7 +1,7 @@
 import { Box, Chip, Paper, Typography } from "@mui/material";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import { ShareButton, CopyButton } from "./ShareButton";
-import { fonts } from "../theme";
+import { fonts, primaryText } from "../theme";
 import { toArabicNumber } from "../utils/arabic";
 import { withDedication } from "../constants/dedication";
 import type { Dua } from "../data/duas";
@@ -27,9 +27,14 @@ export function DuaCard({ dua, index }: Props) {
       <Chip
         label={toArabicNumber(index + 1)}
         size="small"
-        color="primary"
         variant="outlined"
-        sx={{ fontWeight: 700, flexShrink: 0, mt: 0.5 }}
+        sx={{
+          fontWeight: 700,
+          flexShrink: 0,
+          mt: 0.5,
+          color: (theme) => primaryText(theme.palette.mode),
+          borderColor: "currentColor",
+        }}
       />
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography

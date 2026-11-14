@@ -7,6 +7,22 @@ export const palette = {
   charcoal: "#23272A",
 } as const;
 
+/**
+ * لون النص الذهبي المضمون للتباين:
+ * 4.76:1 على العاجي في الوضع الفاتح، و8.55:1 على البطاقة الداكنة.
+ * اللون الذهبي الأساسي يبقى للزخارف والحدود فقط.
+ */
+export const accentText = (mode: PaletteMode): string =>
+  mode === "dark" ? "#E3C77E" : "#8A6A1F";
+
+/**
+ * لون النص/الأيقونة الأساسي المضمون للتباين:
+ * 7.2:1 على الأبيض في الفاتح، و8.4:1 على البطاقة الداكنة.
+ * أخضر primary.main يبقى للخلفيات والحدود فقط في الوضع الداكن.
+ */
+export const primaryText = (mode: PaletteMode): string =>
+  mode === "dark" ? "#A9DCC8" : palette.primary.main;
+
 const fontFamily = {
   sans: '"Noto Sans Arabic", "Segoe UI", system-ui, sans-serif',
   naskh: '"Noto Naskh Arabic", "Noto Sans Arabic", serif',
@@ -21,7 +37,13 @@ function buildTheme(mode: PaletteMode): Theme {
     palette: {
       mode,
       primary: { ...palette.primary, contrastText: palette.primary.contrast },
-      secondary: { ...palette.secondary, contrastText: palette.secondary.contrast },
+      secondary: {
+        ...palette.secondary,
+        // نغمة داكنة للنص في الفاتح، وذهبية فاتحة للنص في الداكن.
+        dark: accentText(mode),
+        light: isDark ? "#E3C77E" : palette.secondary.light,
+        contrastText: palette.secondary.contrast,
+      },
       background: {
         default: isDark ? "#0F1F1A" : palette.ivory,
         paper: isDark ? "#16302A" : "#FFFFFF",
@@ -62,8 +84,17 @@ function buildTheme(mode: PaletteMode): Theme {
             backgroundColor: isDark ? "rgba(201,162,75,0.35)" : "rgba(31,93,76,0.18)",
           },
           "*:focus-visible": {
-            outline: `3px solid ${palette.secondary.main}`,
+            outline: `3px solid ${isDark ? "#E3C77E" : "#8A6A1F"}`,
             outlineOffset: 2,
+          },
+          "@media (prefers-reduced-motion: reduce)": {
+            html: { scrollBehavior: "auto" },
+            "*, *::before, *::after": {
+              animationDuration: "0.01ms !important",
+              animationIterationCount: "1 !important",
+              transitionDuration: "0.01ms !important",
+              scrollBehavior: "auto !important",
+            },
           },
         },
       },

@@ -12,6 +12,7 @@ import type { DayTimings } from "../../data/prayer/api";
 import type { ResolvedLocation } from "../../data/prayer/location";
 import type { PrayerInstant, TimeFormat } from "../../utils/prayer";
 import { formatGregorianLong, formatHijri } from "../../utils/prayer";
+import { primaryText } from "../../theme";
 
 type Props = {
   nowMs: number;
@@ -89,7 +90,11 @@ export function NextPrayerCard({
           justifyContent="space-between"
         >
           <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" rowGap={0.5}>
-            <PlaceIcon fontSize="small" color="primary" />
+            <PlaceIcon
+              fontSize="small"
+              aria-hidden
+              sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+            />
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
               {cityLine}
             </Typography>

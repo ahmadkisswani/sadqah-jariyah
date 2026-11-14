@@ -1,6 +1,7 @@
 import { Box, Typography, type SxProps, type Theme } from "@mui/material";
 import type { Lang } from "../../data/prayer/labels";
 import { formatCountdown, formatCountdownWords } from "../../utils/prayer";
+import { primaryText } from "../../theme";
 import { TABULAR_NUMBERS, srOnly } from "./shared";
 
 type Props = {
@@ -25,6 +26,7 @@ export function LiveCountdown({ msRemaining, lang, label, variant = "h3", sx }: 
     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, ...sx }}>
       <Typography
         role="timer"
+        component="p"
         variant={variant}
         dir="ltr"
         aria-label={`${label}: ${human}`}
@@ -33,7 +35,7 @@ export function LiveCountdown({ msRemaining, lang, label, variant = "h3", sx }: 
           fontWeight: 800,
           letterSpacing: 1,
           lineHeight: 1.1,
-          color: "primary.main",
+          color: (theme) => primaryText(theme.palette.mode),
         }}
       >
         {formatCountdown(msRemaining, lang)}

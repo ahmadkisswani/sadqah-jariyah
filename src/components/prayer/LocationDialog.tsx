@@ -21,6 +21,7 @@ import PlaceIcon from "@mui/icons-material/Place";
 import { COUNTRIES, type CityEntry, type CountryEntry, type ManualCity } from "../../data/prayer/locations";
 import { geolocationEnvironment, isAppleMobile, type ResolvedLocation } from "../../data/prayer/location";
 import { STRINGS, type Lang } from "../../data/prayer/labels";
+import { primaryText } from "../../theme";
 import type { GeolocationPermission, LocationStatus } from "../../hooks/useLocationResolver";
 
 type Props = {
@@ -95,7 +96,10 @@ export function LocationDialog({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="sj-location-title">
       <DialogTitle id="sj-location-title" sx={{ display: "flex", alignItems: "center", gap: 1, pe: 6 }}>
-        <PlaceIcon color="primary" />
+        <PlaceIcon
+          aria-hidden
+          sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+        />
         {STRINGS.location[lang]}
         <IconButton
           aria-label={STRINGS.close[lang]}

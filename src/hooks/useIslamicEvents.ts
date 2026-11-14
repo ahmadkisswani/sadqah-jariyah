@@ -12,13 +12,23 @@ import type { ResolvedLocation } from "../data/prayer/location";
 
 type Options = {
   location: ResolvedLocation | null;
-  /** السنة الهجرية الحالية من رد المواقيت — لا نحسبها محليًا. */
+  /** السنة والشهر واليوم الهجريون من رد المواقيت — لا نحسبها محليًا. */
   hijriYear: number | null;
+  hijriMonth?: number | null;
+  hijriDay?: number | null;
   todayKey: string;
+  /** لا نطلب التقويم إلا عند اقتراب قسم المناسبات من الشاشة. */
   enabled?: boolean;
 };
 
-export function useIslamicEvents({ location, hijriYear, todayKey, enabled = true }: Options) {
+export function useIslamicEvents({
+  location,
+  hijriYear,
+  hijriMonth,
+  hijriDay,
+  todayKey,
+  enabled = true,
+}: Options) {
   const [events, setEvents] = useState<IslamicEvent[] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -34,9 +44,12 @@ export function useIslamicEvents({ location, hijriYear, todayKey, enabled = true
       try {
         const list = await fetchUpcomingEvents({
           hijriYear,
+          hijriMonth: hijriMonth ?? undefined,
+          hijriDay: hijriDay ?? undefined,
           latitude,
           longitude,
           todayKey,
+          limit: 4,
         });
         if (!cancelled) setEvents(list);
       } catch {
@@ -49,7 +62,7 @@ export function useIslamicEvents({ location, hijriYear, todayKey, enabled = true
     return () => {
       cancelled = true;
     };
-  }, [enabled, latitude, longitude, hijriYear, todayKey]);
+  }, [enabled, latitude, longitude, hijriYear, hijriMonth, hijriDay, todayKey]);
 
   return { events, loading };
 }

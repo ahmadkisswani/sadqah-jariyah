@@ -9,6 +9,7 @@ import type { DayTimings } from "../../data/prayer/api";
 import type { RamadanWindow, TimeFormat } from "../../utils/prayer";
 import { formatClock, formatGregorianLong, relativeDays } from "../../utils/prayer";
 import { toArabicNumber } from "../../utils/arabic";
+import { primaryText } from "../../theme";
 
 type Props = {
   lang: Lang;
@@ -64,7 +65,7 @@ export function RamadanCard({
       <Stack spacing={2} sx={{ position: "relative" }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <MosqueIcon color="secondary" />
-          <Typography variant="h6" component="h3" sx={{ fontWeight: 800 }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
             {inRamadan
               ? STRINGS.ramadanMubarak[lang]
               : `${STRINGS.ramadan[lang]} — ${relativeDays(daysUntilRamadan ?? 0, lang)}`}
@@ -110,7 +111,11 @@ export function RamadanCard({
 
               <Stack spacing={0.75}>
                 <Stack direction="row" spacing={0.75} alignItems="center">
-                  <NightsStayIcon fontSize="small" color="primary" />
+                  <NightsStayIcon
+                    fontSize="small"
+                    aria-hidden
+                    sx={{ color: (theme) => primaryText(theme.palette.mode) }}
+                  />
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                     {STRINGS.suhoor[lang]}
                     {window.suhoor ? ` · ${formatClock(window.suhoor.clock, timeFormat, lang)}` : ""}

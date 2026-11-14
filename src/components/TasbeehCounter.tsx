@@ -95,15 +95,18 @@ export function TasbeehCounter() {
     setState((prev) => ({ ...prev, target: value, count: 0 }));
   };
 
-  // دعم لوحة المفاتيح: مفتاح المسافة أو Enter للتسبيح
+  // دعم لوحة المفاتيح: مسافة/Enter للتسبيح عند عدم وجود عنصر تفاعلي مركّز.
+  // لا نعترض الأزرار أو الحقول أو الروابط، ولا نكرّر العدّ عند استمرار الضغط.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const el = document.activeElement;
-      const typing =
-        el instanceof HTMLInputElement ||
-        el instanceof HTMLTextAreaElement ||
-        el instanceof HTMLSelectElement;
-      if (typing) return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.querySelector('[role="dialog"]')) return;
+
+      const target = e.target;
+      if (target instanceof Element && target.closest("button, a, input, textarea, select, [role='button'], [contenteditable='true']")) {
+        return;
+      }
+
       if (e.code === "Space" || e.code === "Enter") {
         e.preventDefault();
         increment();

@@ -12,13 +12,11 @@ import { duaCategories, getDuaCategory } from "../data/duas";
 import { DuaCard } from "../components/DuaCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
-import { usePageTitle } from "../hooks/usePageTitle";
 import { toArabicNumber } from "../utils/arabic";
 
 const DEFAULT = duaCategories[0].id;
 
 export default function DuasPage() {
-  usePageTitle("الأدعية");
   const [activeId, setActiveId] = useState(DEFAULT);
   const [query, setQuery] = useState("");
   const category = getDuaCategory(activeId) ?? duaCategories[0];
@@ -36,17 +34,17 @@ export default function DuasPage() {
   return (
     <Stack spacing={4}>
       <SectionHeader
+        level="h1"
         title="الأدعية"
         subtitle="مجموعة من الأدعية من القرآن الكريم والسنة النبوية، مع نسخ ومشاركة."
       />
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap role="tablist" aria-label="فئات الأدعية">
+      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap role="group" aria-label="فئات الأدعية">
         {duaCategories.map((c) => (
           <Chip
             key={c.id}
             label={c.title}
-            role="tab"
-            aria-selected={c.id === activeId}
+            aria-pressed={c.id === activeId}
             onClick={() => {
               setActiveId(c.id);
               setQuery("");
@@ -59,7 +57,7 @@ export default function DuasPage() {
       </Stack>
 
       <Box>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+        <Typography variant="h6" component="h2" sx={{ fontWeight: 700 }}>
           {category.title}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
