@@ -62,7 +62,7 @@ check("robots يشير إلى sitemap", robots.includes(`Sitemap: ${SITE_URL}/si
 
 const sitemap = exists("sitemap.xml") ? read("sitemap.xml") : "";
 const urlCount = (sitemap.match(/<url>/g) ?? []).length;
-check("sitemap: ١٢٤ رابطًا مفهرسًا", urlCount === 124, `وجد ${urlCount}`);
+check("sitemap: ١٢٧ رابطًا مفهرسًا", urlCount === 127, `وجد ${urlCount}`);
 check("sitemap: الرئيسية", sitemap.includes(`<loc>${SITE_URL}/</loc>`));
 check("sitemap: القرآن", sitemap.includes(`<loc>${SITE_URL}/quran/1</loc>`) && sitemap.includes(`<loc>${SITE_URL}/quran/114</loc>`));
 check("sitemap: استثناء المحفوظات", !sitemap.includes("/bookmarks"));
@@ -75,6 +75,9 @@ const routeShells = [
   ["about.html", "/about", "عن الموقع"],
   ["privacy.html", "/privacy", "الخصوصية"],
   ["prayer-times.html", "/prayer-times", "مواقيت الصلاة"],
+  ["qibla.html", "/qibla", "اتجاه القبلة"],
+  ["mosques.html", "/mosques", "المساجد القريبة"],
+  ["hijri-calendar.html", "/hijri-calendar", "التقويم الهجري"],
 ];
 for (const [file, path, expectedTitle] of routeShells) {
   if (!exists(file)) {
@@ -98,7 +101,15 @@ if (exists("manifest.webmanifest")) {
   check("manifest id", manifest.id === "/");
   check("manifest display", manifest.display === "standalone");
   check("manifest icons", Array.isArray(manifest.icons) && manifest.icons.length === 3);
-  check("manifest shortcuts", Array.isArray(manifest.shortcuts) && manifest.shortcuts.length === 3);
+  const shortcutUrls = Array.isArray(manifest.shortcuts)
+    ? manifest.shortcuts.map((shortcut) => shortcut.url)
+    : [];
+  check(
+    "manifest shortcuts",
+    shortcutUrls.length >= 3 &&
+      ["/quran", "/azkar", "/prayer-times", "/qibla"].every((url) => shortcutUrls.includes(url)),
+    shortcutUrls.join(", "),
+  );
 }
 
 const swFile = readdirSync(DIST).find((file) => /^sw\.js$/.test(file));
@@ -112,6 +123,8 @@ check("أيقونة 192 مرة واحدة", precacheUrls.filter((url) => url.inc
 
 const headers = exists("_headers") ? read("_headers") : "";
 check("رؤوس CSP", headers.includes("Content-Security-Policy"));
+check("CSP: بلاطات OpenStreetMap", headers.includes("tile.openstreetmap.org"));
+check("CSP: خدمة Overpass", headers.includes("overpass-api.de"));
 check("رؤوس Permissions-Policy", headers.includes("Permissions-Policy"));
 check("wrangler.jsonc موجود", existsSync("wrangler.jsonc") && readFileSync("wrangler.jsonc", "utf8").includes('"ASSETS"'));
 

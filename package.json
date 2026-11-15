@@ -10,11 +10,12 @@
     "postbuild": "node scripts/generate-seo.mjs",
     "preview": "vite preview",
     "smoke": "node scripts/smoke-test.mjs",
-    "test": "npm run test:prayer && npm run test:events && npm run test:share && npm run test:content",
+    "test": "npm run test:prayer && npm run test:events && npm run test:share && npm run test:content && npm run test:phase2",
     "test:prayer": "node scripts/prayer-logic-test.mjs",
     "test:events": "node scripts/events-test.mjs",
     "test:share": "node scripts/share-test.mjs",
     "test:content": "node scripts/content-test.mjs",
+    "test:phase2": "node scripts/phase2-logic-test.mjs",
     "verify": "node scripts/verify-build.mjs",
     "deploy": "npx wrangler deploy",
     "deploy:ci": "npm run build && npx wrangler deploy"
@@ -27,11 +28,13 @@
     "@fontsource/noto-sans-arabic": "^5.1.0",
     "@mui/icons-material": "^6.4.0",
     "@mui/material": "^6.4.0",
+    "leaflet": "^1.9.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.22",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",

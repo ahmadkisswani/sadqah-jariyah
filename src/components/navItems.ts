@@ -8,6 +8,9 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import WbSunnyOutlinedIcon from "@mui/icons-material/WbSunnyOutlined";
 import MosqueIcon from "@mui/icons-material/Mosque";
+import ExploreIcon from "@mui/icons-material/Explore";
+import PlaceIcon from "@mui/icons-material/Place";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 export type NavItem = {
@@ -23,6 +26,9 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "الأدعية", to: "/duas", icon: FavoriteIcon },
   { label: "التسبيح", to: "/tasbeeh", icon: AdjustIcon },
   { label: "مواقيت الصلاة", to: "/prayer-times", icon: MosqueIcon },
+  { label: "اتجاه القبلة", to: "/qibla", icon: ExploreIcon },
+  { label: "المساجد القريبة", to: "/mosques", icon: PlaceIcon },
+  { label: "التقويم الهجري", to: "/hijri-calendar", icon: CalendarMonthIcon },
   { label: "الرقية الشرعية", to: "/ruqyah", icon: HealingIcon },
   { label: "ورد اليوم", to: "/daily", icon: WbSunnyOutlinedIcon },
   { label: "عن الموقع", to: "/about", icon: InfoOutlinedIcon },

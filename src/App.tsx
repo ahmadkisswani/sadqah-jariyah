@@ -18,6 +18,9 @@ const AboutPage = lazy(() => import("./pages/AboutPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"));
 const PrayerTimesPage = lazy(() => import("./pages/PrayerTimesPage"));
+const QiblaPage = lazy(() => import("./pages/QiblaPage"));
+const MosquesPage = lazy(() => import("./pages/MosquesPage"));
+const HijriCalendarPage = lazy(() => import("./pages/HijriCalendarPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 export default function App() {
@@ -42,6 +45,9 @@ export default function App() {
                 <Route path="/ruqyah" element={<RuqyahPage />} />
                 <Route path="/daily" element={<DailyPage />} />
                 <Route path="/prayer-times" element={<PrayerTimesPage />} />
+                <Route path="/qibla" element={<QiblaPage />} />
+                <Route path="/mosques" element={<MosquesPage />} />
+                <Route path="/hijri-calendar" element={<HijriCalendarPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/bookmarks" element={<BookmarksPage />} />

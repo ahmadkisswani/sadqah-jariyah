@@ -29,7 +29,7 @@ export default defineConfig({
         name: "صدقة جارية",
         short_name: "صدقة جارية",
         description:
-          "موقع إسلامي لقراءة القرآن الكريم والأذكار والأدعية والتسبيح والرقية الشرعية، صدقة جارية عن توبة عبد العزيز الجربوعه ومحمد احمد مسلم.",
+          "موقع إسلامي لقراءة القرآن الكريم والأذكار والأدعية والتسبيح والرقية الشرعية، مع مواقيت الصلاة واتجاه القبلة والمساجد القريبة والتقويم الهجري. صدقة جارية عن توبة عبد العزيز الجربوعه ومحمد احمد مسلم.",
         start_url: "/",
         scope: "/",
         display: "standalone",
@@ -42,6 +42,7 @@ export default defineConfig({
           { name: "القرآن الكريم", short_name: "القرآن", url: "/quran" },
           { name: "الأذكار", short_name: "الأذكار", url: "/azkar" },
           { name: "مواقيت الصلاة", short_name: "المواقيت", url: "/prayer-times" },
+          { name: "اتجاه القبلة", short_name: "القبلة", url: "/qibla" },
         ],
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },

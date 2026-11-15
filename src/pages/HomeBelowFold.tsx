@@ -10,6 +10,9 @@ import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 import SchoolIcon from "@mui/icons-material/School";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import MosqueIcon from "@mui/icons-material/Mosque";
+import ExploreIcon from "@mui/icons-material/Explore";
+import PlaceIcon from "@mui/icons-material/Place";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { ServiceCard, IslamicCard } from "../components/ServiceCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { DailyWirdCard } from "../components/DailyWirdCard";
@@ -55,6 +58,27 @@ const SERVICES = [
     title: "مواقيت الصلاة",
     description: "مواقيت اليوم حسب موقعك مع عدّاد للصلاة القادمة والتقويم الهجري.",
     to: "/prayer-times",
+    accent: "primary" as const,
+  },
+  {
+    icon: ExploreIcon,
+    title: "اتجاه القبلة",
+    description: "اعرف اتجاه الكعبة من موقعك، مع بوصلة اختيارية تعمل على جهازك فقط.",
+    to: "/qibla",
+    accent: "secondary" as const,
+  },
+  {
+    icon: PlaceIcon,
+    title: "المساجد القريبة",
+    description: "ابحث عن المساجد حولك من بيانات OpenStreetMap، مع المسافة والاتجاهات.",
+    to: "/mosques",
+    accent: "primary" as const,
+  },
+  {
+    icon: CalendarMonthIcon,
+    title: "التقويم الهجري",
+    description: "تصفّح الأشهر الهجرية، وحوّل التواريخ، وتعرّف على المناسبات.",
+    to: "/hijri-calendar",
     accent: "primary" as const,
   },
   {

@@ -9,7 +9,10 @@
 //   5) تغيير القارئ أثناء التشغيل.
 //   6) الرقية: مشغّل واحد فقط يعمل في كل مرة.
 //   7) مواقيت الصلاة: الصلوات الخمس، العدّ التنازلي، الموقع (GPS مُحاكى)،
-//      التقويم الهجري وتفاصيل اليوم، تبديل المذهب، والتعامل مع انقطاع الشبكة.
+//      التقويم الشهري وتفاصيل اليوم، تبديل المذهب، والتعامل مع انقطاع الشبكة.
+//   8) الموجة الأولى: القبلة، التقويم الهجري المستقل، بطاقات المواقيت،
+//      وتذكير الصلاة بلا طلب إذن تلقائي.
+//   9) المساجد القريبة: لا بحث تلقائي، ثم رد Overpass مُحاكى وخريطة كسولة.
 //
 // الاستخدام:  node scripts/smoke-test.mjs  [--url http://localhost:4173] [--fast]
 // (بلا --url يشغّل خادم المعاينة تلقائيًا ثم يوقفه)
@@ -79,14 +82,39 @@ class Cdp {
     this.socket = socket;
     this.nextId = 1;
     this.pending = new Map();
+    this.listeners = new Map();
     socket.addEventListener("message", (event) => {
       const message = JSON.parse(event.data);
+      if (!message.id) {
+        const handlers = this.listeners.get(message.method);
+        if (handlers) {
+          for (const handler of [...handlers]) {
+            try {
+              handler(message.params ?? {});
+            } catch {
+              /* حدث غير قابل للمعالجة */
+            }
+          }
+        }
+        return;
+      }
       const resolver = this.pending.get(message.id);
       if (!resolver) return;
       this.pending.delete(message.id);
       if (message.error) resolver.reject(new Error(JSON.stringify(message.error)));
       else resolver.resolve(message.result);
     });
+  }
+
+  /** الاستماع إلى أحداث CDP (مثل Fetch.requestPaused) وإرجاع دالة لإلغاء الاشتراك. */
+  on(method, handler) {
+    const handlers = this.listeners.get(method) ?? new Set();
+    handlers.add(handler);
+    this.listeners.set(method, handlers);
+    return () => {
+      handlers.delete(handler);
+      if (handlers.size === 0) this.listeners.delete(method);
+    };
   }
 
   static async connect(wsUrl) {
@@ -841,6 +869,253 @@ try {
     deniedState.rows === 5 || deniedState.hasManual || deniedState.hasDenied || deniedState.hasApproximate,
     JSON.stringify(deniedState) + (deniedDebug ? ` | ${deniedDebug}` : ""),
   );
+
+  /* ------------------- الموجة الأولى: أدوات الصلاة الجديدة ------------------- */
+
+  // موقع يدوي ثابت لعمّان — لا نعتمد على GPS في اختبارات الأدوات الجديدة.
+  const amman = {
+    latitude: 31.9539,
+    longitude: 35.9106,
+    city: "عمّان",
+    cityEn: "Amman",
+    country: "الأردن",
+    countryEn: "Jordan",
+    countryCode: "JO",
+    source: "manual",
+    savedAt: Date.now(),
+  };
+  const seedSettings = JSON.stringify({
+    location: amman,
+    methodId: null,
+    school: 0,
+    highLatitude: "auto",
+    timeFormat: "12",
+    lang: "ar",
+    tune: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 },
+  });
+  await browser.evaluate(`(() => {
+    localStorage.setItem("sj-prayer-settings", ${JSON.stringify(seedSettings)});
+    localStorage.removeItem("sj-mosques-cache-v1");
+    localStorage.removeItem("sj-hijri-offset-v1");
+    return true;
+  })()`);
+
+  // 11) بطاقة أدوات المواقيت + تذكير الصلاة (بلا طلب إذن تلقائي)
+  await browser.send("Page.navigate", { url: `${BASE_URL}/prayer-times` });
+  await browser.waitFor(`document.querySelectorAll("[data-prayer]").length === 5`, {
+    timeoutMs: 35_000,
+    label: "مواقيت الصلاة بعد ضبط الموقع اليدوي",
+  });
+  let prayerTools = false;
+  try {
+    await browser.waitFor(
+      `/عن هذه المواقيت/.test(document.body.innerText) && /تذكير الصلاة/.test(document.body.innerText)`,
+      { timeoutMs: 12_000, label: "بطاقة أدوات المواقيت والتذكير" },
+    );
+    prayerTools = true;
+  } catch {
+    prayerTools = false;
+  }
+  const prayerToolsState = await browser.evaluate(`({
+    qibla: /اتجاه القبلة/.test(document.body.innerText),
+    mosques: /المساجد القريبة/.test(document.body.innerText),
+    hijri: /التقويم الهجري/.test(document.body.innerText),
+    notificationPermission: typeof Notification === "undefined" ? "unsupported" : Notification.permission,
+  })`);
+  check(
+    "صفحة المواقيت تعرض بطاقة السياق وأدوات القبلة والمساجد والتقويم",
+    prayerTools && prayerToolsState.qibla && prayerToolsState.mosques && prayerToolsState.hijri,
+    JSON.stringify(prayerToolsState),
+  );
+
+  // 12) التقويم الهجري: شبكة محلية، تمييز اليوم، الإزاحة، نافذة اليوم
+  await browser.send("Page.navigate", { url: `${BASE_URL}/hijri-calendar` });
+  await browser.waitFor(`document.querySelectorAll("[data-hijri-day]").length >= 28`, {
+    timeoutMs: 20_000,
+    label: "شبكة التقويم الهجري",
+  });
+  const hijriBefore = await browser.evaluate(`({
+    days: document.querySelectorAll("[data-hijri-day]").length,
+    today: document.querySelectorAll('[data-today="true"]').length,
+    first: document.querySelector("[data-hijri-day]")?.getAttribute("data-gregorian") ?? "",
+    heading: document.querySelector("main h2")?.innerText ?? "",
+    body: document.body.innerText,
+  })`);
+  check(
+    "التقويم الهجري يعرض شهرًا كاملًا ويميّز اليوم",
+    hijriBefore.days >= 29 &&
+      hijriBefore.days <= 30 &&
+      hijriBefore.today === 1 &&
+      hijriBefore.heading.includes("هـ"),
+    JSON.stringify({ days: hijriBefore.days, today: hijriBefore.today, heading: hijriBefore.heading }),
+  );
+  check(
+    "محوّل التاريخ الهجري يعرض نتيجة محلية",
+    hijriBefore.body.includes("محوّل التاريخ") && /[٠-٩]{4}\s*هـ/.test(hijriBefore.body),
+  );
+
+  let offsetWorks = false;
+  try {
+    await browser.clickText('section[aria-label="إزاحة التاريخ"] button', "+");
+    await browser.waitFor(
+      `document.querySelector("[data-hijri-day]")?.getAttribute("data-gregorian") !== ${JSON.stringify(
+        hijriBefore.first,
+      )}`,
+      { timeoutMs: 10_000, label: "تغيّر بداية الشهر عند الإزاحة" },
+    );
+    const shifted = await browser.evaluate(
+      `document.querySelector("[data-hijri-day]")?.getAttribute("data-gregorian") ?? ""`,
+    );
+    const diffDays = (Date.parse(hijriBefore.first) - Date.parse(shifted)) / 86_400_000;
+    offsetWorks = Math.abs(diffDays) === 1;
+  } catch {
+    offsetWorks = false;
+  }
+  check("إزاحة التقويم الهجري ±يوم تُغيّر بداية الشهر", offsetWorks);
+
+  let hijriDialog = false;
+  try {
+    await browser.click('[data-today="true"]');
+    await browser.waitFor(`!!document.querySelector('[role="dialog"]')`, {
+      timeoutMs: 8_000,
+      label: "نافذة اليوم الهجري",
+    });
+    const dialogText = await browser.evaluate(
+      `document.querySelector('[role="dialog"]')?.innerText ?? ""`,
+    );
+    hijriDialog = dialogText.includes("هـ") && dialogText.includes("مواقيت الصلاة");
+    if (hijriDialog) {
+      await browser.click('[role="dialog"] button[aria-label="إغلاق"]');
+      await sleep(350);
+    }
+  } catch {
+    hijriDialog = false;
+  }
+  check("نقر يوم هجري يفتح تفاصيله", hijriDialog);
+
+  const hijriOverflow = await browser.evaluate(`({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  })`);
+  check(
+    "لا تمرير أفقي في صفحة التقويم الهجري على الجوال",
+    hijriOverflow.scrollWidth <= hijriOverflow.clientWidth + 1,
+    JSON.stringify(hijriOverflow),
+  );
+
+  // 13) القبلة: حساب محلي بالدرجة، بلا طلب إذن بوصلة تلقائي
+  await browser.send("Page.navigate", { url: `${BASE_URL}/qibla` });
+  await browser.waitFor(`!!document.querySelector("[data-qibla-bearing]")`, {
+    timeoutMs: 15_000,
+    label: "درجة القبلة المحسوبة",
+  });
+  const qiblaState = await browser.evaluate(`({
+    bearing: Number(document.querySelector("[data-qibla-bearing]")?.getAttribute("data-qibla-bearing")),
+    text: document.body.innerText,
+    overflow: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+  })`);
+  check(
+    "اتجاه القبلة من عمّان قريب من ١٥٩° ويعرض المسافة",
+    qiblaState.bearing >= 150 &&
+      qiblaState.bearing <= 170 &&
+      qiblaState.text.includes("المسافة إلى الكعبة") &&
+      qiblaState.text.includes("عمّان"),
+    `الدرجة: ${qiblaState.bearing}`,
+  );
+  check("لا تمرير أفقي في صفحة القبلة على الجوال", qiblaState.overflow);
+
+  // 14) المساجد: لا بحث تلقائي، ثم بحث مع رد Overpass مُحاكى، ثم خريطة Leaflet
+  await browser.send("Page.navigate", { url: `${BASE_URL}/mosques` });
+  await browser.waitFor(
+    `[...document.querySelectorAll("button")].some((button) => button.textContent.includes("ابحث عن المساجد القريبة"))`,
+    { timeoutMs: 12_000, label: "زر البحث عن المساجد" },
+  );
+  const overpassBefore = await browser.evaluate(
+    `performance.getEntriesByType("resource").filter((entry) => entry.name.includes("overpass")).length`,
+  );
+  check("لا يبدأ بحث المساجد تلقائيًا", overpassBefore === 0, `الطلبات: ${overpassBefore}`);
+
+  const mosquePayload = {
+    elements: [
+      {
+        type: "node",
+        id: 101,
+        lat: 31.96,
+        lon: 35.92,
+        tags: {
+          amenity: "place_of_worship",
+          religion: "muslim",
+          "name:ar": "مسجد النور",
+          "addr:street": "شارع الملك",
+          "addr:city": "عمّان",
+        },
+      },
+      {
+        type: "way",
+        id: 102,
+        center: { lat: 31.97, lon: 35.93 },
+        tags: { building: "mosque", name: "Mosque B" },
+      },
+    ],
+  };
+  const fulfillOverpass = (params) => {
+    void browser
+      .send("Fetch.fulfillRequest", {
+        requestId: params.requestId,
+        responseCode: 200,
+        responseHeaders: [
+          { name: "Content-Type", value: "application/json; charset=utf-8" },
+          { name: "Access-Control-Allow-Origin", value: "*" },
+        ],
+        body: Buffer.from(JSON.stringify(mosquePayload), "utf8").toString("base64"),
+      })
+      .catch(() => {});
+  };
+  const stopOverpass = browser.on("Fetch.requestPaused", fulfillOverpass);
+  await browser.send("Fetch.enable", {
+    patterns: [{ urlPattern: "*overpass*", requestStage: "Request" }],
+  });
+  let mosqueResults = false;
+  try {
+    await browser.clickText("button", "ابحث عن المساجد القريبة");
+    await browser.waitFor(`document.querySelectorAll("[data-mosque-id]").length === 2`, {
+      timeoutMs: 20_000,
+      label: "نتائج المساجد من رد Overpass",
+    });
+    mosqueResults = true;
+  } catch {
+    mosqueResults = false;
+  } finally {
+    stopOverpass();
+    await browser.send("Fetch.disable").catch(() => {});
+  }
+  const mosqueState = await browser.evaluate(`({
+    count: document.querySelector("[data-mosque-count]")?.getAttribute("data-mosque-count") ?? "",
+    text: document.body.innerText,
+    cards: document.querySelectorAll("[data-mosque-id]").length,
+  })`);
+  check(
+    "بحث المساجد يعرض النتائج والمسافة من رد Overpass",
+    mosqueResults &&
+      mosqueState.count === "2" &&
+      mosqueState.cards === 2 &&
+      mosqueState.text.includes("مسجد النور") &&
+      mosqueState.text.includes("Mosque B"),
+    JSON.stringify({ count: mosqueState.count, cards: mosqueState.cards }),
+  );
+
+  let mapWorks = false;
+  try {
+    await browser.clickText("button", "عرض الخريطة");
+    await browser.waitFor(
+      `!!document.querySelector(".sj-mosque-map") && !!document.querySelector(".leaflet-container")`,
+      { timeoutMs: 20_000, label: "خريطة Leaflet" },
+    );
+    mapWorks = true;
+  } catch {
+    mapWorks = false;
+  }
+  check("خريطة المساجد تُحمَّل كسولًا وتظهر", mapWorks);
 } catch (error) {
   check("اكتمل الاختبار بلا أخطاء تنفيذية", false, String(error.message ?? error));
   if (pageErrors.length > 0) {

@@ -98,7 +98,18 @@ export default function AboutPage() {
             </Typography>{" "}
             <Typography component="span" variant="body2">
               تُحسب عبر AlAdhan API وفق الطريقة والمذهب اللذين تختارهما، وقد تختلف قليلًا عن مسجدك.
-              التقويم الهجري تقويمي حسابي/رسمي بحسب الخدمة، وقد تختلف بداية الشهر بحسب الرؤية.
+              التقويم الهجري يُحسب محليًا في المتصفح حسب تقويم أم القرى، مع إزاحة اختيارية ±يومين
+              لمراعاة اختلاف بداية الشهر بين البلدان.
+            </Typography>
+          </li>
+          <li>
+            <Typography component="span" sx={{ fontWeight: 700, color: "text.primary" }}>
+              القبلة والمساجد:
+            </Typography>{" "}
+            <Typography component="span" variant="body2">
+              اتجاه القبلة يُحسب محليًا بمعادلة المسافة الكبرى من موقعك إلى الكعبة. المساجد تأتي من
+              بيانات OpenStreetMap عبر Overpass API وبلاطات الخريطة من OpenStreetMap (رخصة ODbL)؛
+              التغطية تطوعية وقد لا تشمل كل مسجد، ولا نتحقق من أوقات العمل أو الطائفة.
             </Typography>
           </li>
           <li>

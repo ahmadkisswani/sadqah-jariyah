@@ -18,6 +18,8 @@ import { SectionHeader } from "../components/SectionHeader";
 import { ShareButton } from "../components/ShareButton";
 import { NextPrayerCard } from "../components/prayer/NextPrayerCard";
 import { PrayerTimesGrid } from "../components/prayer/PrayerTimesGrid";
+import { PrayerInfoCard } from "../components/prayer/PrayerInfoCard";
+import { PrayerRemindersCard } from "../components/prayer/PrayerRemindersCard";
 import { RamadanCard } from "../components/prayer/RamadanCard";
 import { EventsCard } from "../components/prayer/EventsCard";
 import { MonthCalendar } from "../components/prayer/MonthCalendar";
@@ -142,6 +144,7 @@ export default function PrayerTimesPage() {
 
   const errorText = times.error ? describeApiError(times.error) : null;
   const methodLabel = times.today ? methodName(times.today.method.id, lang) : null;
+  const locationLabel = location ? settingsLocationLabel(location, lang) : "";
 
   const shareText = withDedication(
     times.today
@@ -319,6 +322,15 @@ export default function PrayerTimesPage() {
                 methodLabel={methodLabel}
                 onRetry={times.retry}
               />
+              <PrayerInfoCard
+                lang={lang}
+                timezone={times.today?.timezone ?? resolvedTimezone}
+                methodLabel={methodLabel}
+                stale={times.stale}
+                loading={times.loading}
+                locationLabel={locationLabel}
+              />
+              <PrayerRemindersCard lang={lang} next={next} now={now} locationLabel={locationLabel} />
             </Stack>
           </Box>
 

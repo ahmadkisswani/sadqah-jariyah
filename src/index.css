@@ -46,3 +46,124 @@ svg,
 iframe {
   max-width: 100%;
 }
+
+/* ------------------------------- خريطة المساجد ------------------------------- */
+.sj-mosque-map {
+  width: 100%;
+  height: 360px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(31, 93, 76, 0.16);
+  background: #e8eee9;
+}
+
+@media (min-width: 600px) {
+  .sj-mosque-map {
+    height: 460px;
+  }
+}
+
+/* Leaflet يضبط أبعاد البلاطات بنفسه — لا نقيّدها بقاعدة الصور العامة. */
+.leaflet-container img {
+  max-width: none !important;
+}
+
+.sj-map-user-wrap,
+.sj-map-mosque-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.sj-map-user-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2b7cff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgba(43, 124, 255, 0.24);
+}
+
+.sj-map-mosque-pin {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #1f5d4c;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  font: 700 11px/1 "Noto Sans Arabic", system-ui, sans-serif;
+}
+
+.sj-map-mosque-pin > span {
+  transform: rotate(45deg);
+}
+
+.sj-map-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+  max-width: 240px;
+  text-align: start;
+  font-family: "Noto Sans Arabic", system-ui, sans-serif;
+}
+
+.sj-map-popup strong {
+  font-size: 0.95rem;
+}
+
+.sj-map-popup span {
+  color: #4b5d56;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.sj-map-popup button {
+  align-self: flex-start;
+  border: 1px solid rgba(31, 93, 76, 0.35);
+  background: rgba(31, 93, 76, 0.08);
+  color: #1f5d4c;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sj-map-popup button:hover,
+.sj-map-popup button:focus-visible {
+  background: rgba(31, 93, 76, 0.16);
+}
+
+/* بوصلة القبلة */
+.sj-compass {
+  position: relative;
+  width: min(76vw, 320px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border-radius: 50%;
+  touch-action: manipulation;
+}
+
+.sj-compass__rose {
+  position: absolute;
+  inset: 0;
+  transition: transform 120ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sj-compass__rose {
+    transition: none;
+  }
+}
+
+.sj-compass__needle {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--sj-qibla-angle, 0deg));
+}
