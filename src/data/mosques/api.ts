@@ -289,6 +289,58 @@ function putCache(location: Coordinates, radiusKm: number, mosques: Mosque[]) {
 
 /* --------------------------------- الشبكة -------------------------------- */
 
+/** مسار نفس الأصل الذي يمرّر الاستعلام عبر عامل Cloudflare للموقع. */
+const PROXY_PATH = "/api/mosques";
+const PROXY_TIMEOUT_MS = 32_000;
+
+/** رابط تمرير البحث عبر عامل Cloudflare (نفس الأصل). */
+export function buildProxySearchUrl(
+  origin: string,
+  location: Coordinates,
+  radiusKm: number,
+): string {
+  const params = new URLSearchParams({
+    lat: location.latitude.toFixed(5),
+    lon: location.longitude.toFixed(5),
+    r: String(radiusKm),
+  });
+  return `${origin}${PROXY_PATH}?${params.toString()}`;
+}
+
+/**
+ * تمرير البحث عبر عامل Cloudflare الخاص بالموقع (نفس الأصل).
+ * يفيد حين تكون خدمات Overpass العامة محجوبة أو بطيئة من شبكة المستخدم.
+ * لا يُستخدم إلا للقراءة، ولا يُخزَّن شيء على الخادم.
+ */
+async function fetchViaProxy(location: Coordinates, radiusKm: number): Promise<unknown | null> {
+  if (typeof window === "undefined" || !window.location?.origin) return null;
+  const origin = window.location.origin;
+  try {
+    const base = new URL(origin);
+    if (base.protocol !== "http:" && base.protocol !== "https:") return null;
+  } catch {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
+  try {
+    const response = await fetch(buildProxySearchUrl(origin, location, radiusKm), {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as Json;
+    // العامل يعيد عناصر Overpass الخام كما هي.
+    if (!Array.isArray(payload.elements)) return null;
+    return payload;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function fetchFromEndpoint(
   endpoint: string,
   query: string,
@@ -341,6 +393,16 @@ export async function searchMosques(
   const query = buildOverpassQuery(location, radiusKm);
   let lastError: unknown = null;
   let emptyResult: Mosque[] | null = null;
+
+  // أولًا: نفس الأصل — عامل Cloudflare يمرّر الاستعلام من شبكة قريبة من
+  // الخوادم العامة، فيكون أسرع وأقل عرضة للحجب من اتصال المتصفح مباشرة.
+  const proxied = await fetchViaProxy(location, radiusKm);
+  if (proxied) {
+    const mosques = parseOverpassPayload(proxied, location);
+    // العامل يجرّب كل الخوادم قبل أن يعيد نتيجة فارغة، فلا حاجة لتكرار الطلب.
+    if (mosques.length > 0) putCache(location, radiusKm, mosques);
+    return { mosques, source: "network", stale: false, fetchedAt: Date.now() };
+  }
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
     const controller = new AbortController();

@@ -22,7 +22,7 @@ Features are ranked by **User value**, **Complexity**, **Performance impact**, *
 | Hijri calendar (`/hijri-calendar`) | High | Low | None | Low | High | Local `Intl` Umm al-Qura conversion, ±2-day offset, converter, existing events only. |
 | Privacy/About/CSP updates | High | Low | None | Low | High | OSM/Overpass/notifications disclosed; CSP limited to new hosts. |
 
-**Post-Wave-1 fixes:** desktop nav condensed into six primary links + a `المزيد` menu; Qibla compass clipped and ornamentation made non-interactive; mosque map available before search and on zero results, with tile-failure fallback; mosque search switched to global-only Overpass endpoints and now skips successful-but-empty responses (the previous regional mirror caused false “0 results”).
+**Post-Wave-1 fixes:** desktop nav condensed into six primary links + a `المزيد` menu; Qibla compass clipped and ornamentation made non-interactive; mosque map available before search and on zero results, with tile-failure fallback; mosque search switched to global-only Overpass endpoints, skips successful-but-empty responses (the previous regional mirror caused false “0 results”), and now runs through a same-origin Cloudflare Worker relay (`/api/mosques`) with a Photon fallback and edge caching, because public Overpass servers are blocked or throttled on some networks.
 
 ## Phase 2 — Wave 2 (planned, requires verified input)| Rank | Feature | User value | Complexity | Performance impact | Maintenance | Reliability | Rationale |
 |---:|---|---:|---:|---:|---:|---:|---|

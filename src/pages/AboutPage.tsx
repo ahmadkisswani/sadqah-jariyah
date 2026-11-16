@@ -108,8 +108,9 @@ export default function AboutPage() {
             </Typography>{" "}
             <Typography component="span" variant="body2">
               اتجاه القبلة يُحسب محليًا بمعادلة المسافة الكبرى من موقعك إلى الكعبة. المساجد تأتي من
-              بيانات OpenStreetMap عبر Overpass API وبلاطات الخريطة من OpenStreetMap (رخصة ODbL)؛
-              التغطية تطوعية وقد لا تشمل كل مسجد، ولا نتحقق من أوقات العمل أو الطائفة.
+              بيانات OpenStreetMap المفتوحة (Overpass أو Photon) عبر عامل الموقع، وبلاطات الخريطة من
+              OpenStreetMap (رخصة ODbL)؛ التغطية تطوعية وقد لا تشمل كل مسجد، ولا نتحقق من أوقات العمل
+              أو الطائفة.
             </Typography>
           </li>
           <li>

@@ -1030,7 +1030,7 @@ try {
     { timeoutMs: 12_000, label: "زر البحث عن المساجد" },
   );
   const overpassBefore = await browser.evaluate(
-    `performance.getEntriesByType("resource").filter((entry) => entry.name.includes("overpass")).length`,
+    `performance.getEntriesByType("resource").filter((entry) => entry.name.includes("overpass") || entry.name.includes("/api/mosques")).length`,
   );
   check("لا يبدأ بحث المساجد تلقائيًا", overpassBefore === 0, `الطلبات: ${overpassBefore}`);
 
@@ -1038,6 +1038,39 @@ try {
     `[...document.querySelectorAll("button")].some((button) => button.textContent.includes("عرض الخريطة"))`,
   );
   check("زر الخريطة متاح حتى قبل نجاح البحث", mapBeforeSearch);
+
+  const mosqueApiProbe = await (async () => {
+    if (!BASE_URL.includes("workers.dev")) {
+      return { skipped: true, detail: "المسار متاح على عامل Cloudflare فقط" };
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/api/mosques?lat=31.9539&lon=35.9106&r=3`, {
+        headers: { Accept: "application/json" },
+      });
+      const text = await response.text();
+      let payload = null;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        return { ok: false, status: response.status, detail: "ردّ ليس JSON" };
+      }
+      const hasElements = Array.isArray(payload?.elements);
+      const hasError = typeof payload?.error === "string";
+      return {
+        ok: hasElements || hasError,
+        status: response.status,
+        count: hasElements ? payload.elements.length : -1,
+        error: payload?.error ?? "",
+      };
+    } catch (error) {
+      return { ok: false, detail: String(error?.message ?? error) };
+    }
+  })();
+  check(
+    "مسار بحث المساجد في عامل Cloudflare يردّ JSON صالح",
+    mosqueApiProbe.skipped ? true : mosqueApiProbe.ok,
+    JSON.stringify(mosqueApiProbe),
+  );
 
   const mosquePayload = {
     elements: [
@@ -1076,37 +1109,68 @@ try {
       .catch(() => {});
   };
   const stopOverpass = browser.on("Fetch.requestPaused", fulfillOverpass);
-  await browser.send("Fetch.enable", {
-    patterns: [{ urlPattern: "*overpass*", requestStage: "Request" }],
-  });
-  let mosqueResults = false;
-  try {
-    await browser.clickText("button", "ابحث عن المساجد القريبة");
-    await browser.waitFor(`document.querySelectorAll("[data-mosque-id]").length === 2`, {
-      timeoutMs: 20_000,
-      label: "نتائج المساجد من رد Overpass",
-    });
-    mosqueResults = true;
-  } catch {
-    mosqueResults = false;
-  } finally {
-    stopOverpass();
+  // وضع البحث الحيّ: بلا محاكاة، لاختبار المسار الحقيقي (عامل Cloudflare).
+  const liveMosques = process.argv.includes("--live-mosques");
+  if (liveMosques) {
     await browser.send("Fetch.disable").catch(() => {});
+    stopOverpass();
+    let liveResults = false;
+    try {
+      await browser.clickText("button", "ابحث عن المساجد القريبة");
+      await browser.waitFor(
+        `Number(document.querySelector("[data-mosque-count]")?.getAttribute("data-mosque-count") ?? 0) > 0`,
+        { timeoutMs: 60_000, label: "نتائج المساجد الحقيقية" },
+      );
+      liveResults = true;
+    } catch {
+      liveResults = false;
+    }
+    const liveState = await browser.evaluate(`({
+      count: document.querySelector("[data-mosque-count]")?.getAttribute("data-mosque-count") ?? "",
+      cards: document.querySelectorAll("[data-mosque-id]").length,
+      sample: document.querySelector("[data-mosque-id]")?.innerText?.split("\\n")[0] ?? "",
+    })`);
+    check(
+      "بحث المساجد الحيّ يعيد نتائج حقيقية",
+      liveResults && Number(liveState.count) > 0,
+      JSON.stringify(liveState),
+    );
+  } else {
+    await browser.send("Fetch.enable", {
+      patterns: [
+        { urlPattern: "*overpass*", requestStage: "Request" },
+        { urlPattern: "*/api/mosques*", requestStage: "Request" },
+      ],
+    });
+    let mosqueResults = false;
+    try {
+      await browser.clickText("button", "ابحث عن المساجد القريبة");
+      await browser.waitFor(`document.querySelectorAll("[data-mosque-id]").length === 2`, {
+        timeoutMs: 20_000,
+        label: "نتائج المساجد من رد Overpass",
+      });
+      mosqueResults = true;
+    } catch {
+      mosqueResults = false;
+    } finally {
+      stopOverpass();
+      await browser.send("Fetch.disable").catch(() => {});
+    }
+    const mosqueState = await browser.evaluate(`({
+      count: document.querySelector("[data-mosque-count]")?.getAttribute("data-mosque-count") ?? "",
+      text: document.body.innerText,
+      cards: document.querySelectorAll("[data-mosque-id]").length,
+    })`);
+    check(
+      "بحث المساجد يعرض النتائج والمسافة من رد Overpass",
+      mosqueResults &&
+        mosqueState.count === "2" &&
+        mosqueState.cards === 2 &&
+        mosqueState.text.includes("مسجد النور") &&
+        mosqueState.text.includes("Mosque B"),
+      JSON.stringify({ count: mosqueState.count, cards: mosqueState.cards }),
+    );
   }
-  const mosqueState = await browser.evaluate(`({
-    count: document.querySelector("[data-mosque-count]")?.getAttribute("data-mosque-count") ?? "",
-    text: document.body.innerText,
-    cards: document.querySelectorAll("[data-mosque-id]").length,
-  })`);
-  check(
-    "بحث المساجد يعرض النتائج والمسافة من رد Overpass",
-    mosqueResults &&
-      mosqueState.count === "2" &&
-      mosqueState.cards === 2 &&
-      mosqueState.text.includes("مسجد النور") &&
-      mosqueState.text.includes("Mosque B"),
-    JSON.stringify({ count: mosqueState.count, cards: mosqueState.cards }),
-  );
 
   let mapWorks = false;
   try {

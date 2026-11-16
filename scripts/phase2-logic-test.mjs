@@ -234,6 +234,57 @@ await checkAsync("Overpass: ردّ فارغ لا يمنع تجربة الخاد�
   }
 });
 
+check("Overpass: رابط التمرير عبر عامل Cloudflare صحيح", () => {
+  const url = mosques.buildProxySearchUrl(
+    "https://sadqah-jariyah.ahmadkisswanisite.workers.dev",
+    AMMAN,
+    3,
+  );
+  ok(url.startsWith("https://sadqah-jariyah.ahmadkisswanisite.workers.dev/api/mosques?"), "المسار");
+  ok(url.includes("lat=31.9539"), "خط العرض مقرّب");
+  ok(url.includes("lon=35.9106"), "خط الطول مقرّب");
+  ok(url.includes("r=3"), "نصف القطر");
+});
+
+await checkAsync("Overpass: البحث يمرّ عبر عامل Cloudflare أولًا", async () => {
+  const store = new Map();
+  globalThis.window = {
+    location: { origin: "https://sadqah-jariyah.ahmadkisswanisite.workers.dev" },
+    localStorage: {
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => store.set(key, value),
+    },
+  };
+  const realFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    return new Response(
+      JSON.stringify({
+        elements: [
+          {
+            type: "way",
+            id: 7,
+            center: { lat: 31.96, lon: 35.92 },
+            tags: { building: "mosque", "name:ar": "مسجد الوسيط" },
+          },
+        ],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  try {
+    const result = await mosques.searchMosques(AMMAN, 3, { force: true });
+    eq(result.mosques.length, 1, "نتيجة من العامل");
+    eq(result.mosques[0].name, "مسجد الوسيط");
+    eq(calls.length, 1, "طلب واحد عبر العامل");
+    ok(calls[0].includes("/api/mosques?"), "طلب إلى مسار العامل");
+  } finally {
+    globalThis.fetch = realFetch;
+    delete globalThis.window;
+  }
+});
+
 check("Overpass: لا تُستخدم نتيجة فارغة مخزّنة", () => {
   const store = new Map();
   globalThis.window = {
