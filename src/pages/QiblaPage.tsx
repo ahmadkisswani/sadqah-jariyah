@@ -374,10 +374,8 @@ export default function QiblaPage() {
                   >
                     <svg viewBox="0 0 240 240" width="100%" height="100%" aria-hidden="true">
                       <polygon points="120,30 130,104 120,96 110,104" fill="#C9A24B" />
-                      <rect x="112" y="20" width="16" height="16" rx="3" fill="#1F5D4C" stroke="#C9A24B" strokeWidth="2" />
-                      <text x="120" y="32" textAnchor="middle" fontSize="8" fontWeight="800" fill="#fff">
-                        ﷽
-                      </text>
+                      <rect x="113" y="20" width="14" height="14" rx="2.5" fill="#1F5D4C" stroke="#C9A24B" strokeWidth="2" />
+                      <path d="M114.5 26.5h11" stroke="#C9A24B" strokeWidth="1.4" strokeLinecap="round" />
                     </svg>
                   </Box>
                 </Box>

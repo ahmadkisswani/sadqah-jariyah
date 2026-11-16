@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Box, Link } from "@mui/material";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { Mosque } from "../../data/mosques/api";
+import { osmMapLink, type Mosque } from "../../data/mosques/api";
 import type { Coordinates } from "../../utils/geo";
 import { formatDistance } from "../../utils/geo";
 
@@ -39,6 +40,7 @@ export default function MosqueMap({ user, mosques, lang, selectedId, onSelect }:
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
   const onSelectRef = useRef(onSelect);
+  const [tilesFailed, setTilesFailed] = useState(false);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
@@ -46,23 +48,39 @@ export default function MosqueMap({ user, mosques, lang, selectedId, onSelect }:
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    setTilesFailed(false);
     const map = L.map(containerRef.current, {
       center: [user.latitude, user.longitude],
       zoom: 14,
       scrollWheelZoom: false,
       zoomControl: true,
     });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    const tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
-    }).addTo(map);
+    });
+    let tileErrors = 0;
+    const handleTileError = () => {
+      tileErrors += 1;
+      if (tileErrors >= 6) setTilesFailed(true);
+    };
+    tileLayer.on("tileerror", handleTileError);
+    tileLayer.addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
     const timer = window.setTimeout(() => map.invalidateSize(), 120);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => map.invalidateSize({ animate: false }));
+    if (containerRef.current) observer?.observe(containerRef.current);
+
     return () => {
       window.clearTimeout(timer);
+      observer?.disconnect();
+      tileLayer.off("tileerror", handleTileError);
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
@@ -129,11 +147,35 @@ export default function MosqueMap({ user, mosques, lang, selectedId, onSelect }:
   }, [selectedId, mosques]);
 
   return (
-    <div
-      ref={containerRef}
-      className="sj-mosque-map"
-      role="region"
-      aria-label={lang === "ar" ? "خريطة المساجد القريبة" : "Nearby mosques map"}
-    />
+    <Box>
+      {tilesFailed ? (
+        <Alert
+          severity="warning"
+          sx={{ borderRadius: 3, mb: 1.5 }}
+          action={
+            <Link
+              href={osmMapLink(user)}
+              target="_blank"
+              rel="noopener noreferrer"
+              color="inherit"
+              underline="always"
+              sx={{ fontWeight: 700, whiteSpace: "nowrap" }}
+            >
+              {lang === "ar" ? "فتح OpenStreetMap" : "Open OpenStreetMap"}
+            </Link>
+          }
+        >
+          {lang === "ar"
+            ? "تعذّر تحميل بلاطات الخريطة على هذا الاتصال. يمكنك فتح الموقع مباشرة على OpenStreetMap."
+            : "Map tiles could not load on this connection. You can open the location directly on OpenStreetMap."}
+        </Alert>
+      ) : null}
+      <div
+        ref={containerRef}
+        className="sj-mosque-map"
+        role="region"
+        aria-label={lang === "ar" ? "خريطة المساجد القريبة" : "Nearby mosques map"}
+      />
+    </Box>
   );
 }

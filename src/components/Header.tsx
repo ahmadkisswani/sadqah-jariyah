@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AppBar,
   Box,
@@ -9,6 +9,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Toolbar,
   Tooltip,
   Typography,
@@ -17,6 +19,7 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import { Link as RouterLink, useLocation } from "react-router-dom";
@@ -27,14 +30,28 @@ import { primaryText } from "../theme";
 
 type Props = { mode: "light" | "dark"; onToggleMode: () => void };
 
+/** روابط سطح المكتب الأساسية — الباقي في قائمة «المزيد» لتفادي ازدحام الشريط. */
+const DESKTOP_PRIMARY_PATHS = new Set(["/", "/quran", "/azkar", "/prayer-times", "/qibla", "/mosques"]);
+const DESKTOP_PRIMARY_ITEMS = NAV_ITEMS.filter((item) => DESKTOP_PRIMARY_PATHS.has(item.to));
+const DESKTOP_MORE_ITEMS = [
+  ...NAV_ITEMS.filter((item) => !DESKTOP_PRIMARY_PATHS.has(item.to)),
+  BOOKMARKS_ITEM,
+];
+
 export function Header({ mode, onToggleMode }: Props) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const { pathname } = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [moreAnchor, setMoreAnchor] = useState<HTMLElement | null>(null);
 
   const ModeIcon = mode === "dark" ? LightModeIcon : DarkModeIcon;
   const modeLabel = mode === "dark" ? "الوضع الفاتح" : "الوضع الداكن";
+  const moreActive = DESKTOP_MORE_ITEMS.some((item) => isActivePath(pathname, item.to));
+
+  useEffect(() => {
+    setMoreAnchor(null);
+  }, [pathname]);
 
   return (
     <>
@@ -109,8 +126,19 @@ export function Header({ mode, onToggleMode }: Props) {
 
           {/* تنقّل سطح المكتب */}
           {isDesktop && (
-            <Box component="nav" aria-label="التنقل الرئيسي" sx={{ flexGrow: 1, display: "flex", gap: 0.5, justifyContent: "center", flexWrap: "wrap" }}>
-              {NAV_ITEMS.map((item) => {
+            <Box
+              component="nav"
+              aria-label="التنقل الرئيسي"
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                gap: 0.25,
+                justifyContent: "center",
+                flexWrap: "nowrap",
+                minWidth: 0,
+              }}
+            >
+              {DESKTOP_PRIMARY_ITEMS.map((item) => {
                 const active = isActivePath(pathname, item.to);
                 return (
                   <Button
@@ -121,7 +149,8 @@ export function Header({ mode, onToggleMode }: Props) {
                     aria-current={active ? "page" : undefined}
                     sx={{
                       py: 1,
-                      px: 1.5,
+                      px: 1.25,
+                      whiteSpace: "nowrap",
                       fontWeight: active ? 800 : 600,
                       color: active ? (theme) => primaryText(theme.palette.mode) : "text.secondary",
                       position: "relative",
@@ -144,6 +173,70 @@ export function Header({ mode, onToggleMode }: Props) {
                   </Button>
                 );
               })}
+              <Button
+                color="inherit"
+                onClick={(event) => setMoreAnchor(event.currentTarget)}
+                endIcon={<ExpandMoreIcon />}
+                aria-haspopup="menu"
+                aria-expanded={moreAnchor ? "true" : undefined}
+                aria-controls={moreAnchor ? "desktop-more-menu" : undefined}
+                sx={{
+                  py: 1,
+                  px: 1.25,
+                  whiteSpace: "nowrap",
+                  fontWeight: moreActive ? 800 : 600,
+                  color: moreActive ? (theme) => primaryText(theme.palette.mode) : "text.secondary",
+                  position: "relative",
+                  "&::after": moreActive
+                    ? {
+                        content: '""',
+                        position: "absolute",
+                        bottom: 2,
+                        right: "50%",
+                        transform: "translateX(50%)",
+                        width: "46%",
+                        height: 3,
+                        borderRadius: 2,
+                        bgcolor: "secondary.main",
+                      }
+                    : {},
+                  "& .MuiButton-endIcon": { marginInlineStart: 0.25, marginInlineEnd: -0.5 },
+                }}
+              >
+                المزيد
+              </Button>
+              <Menu
+                id="desktop-more-menu"
+                anchorEl={moreAnchor}
+                open={Boolean(moreAnchor)}
+                onClose={() => setMoreAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                transformOrigin={{ vertical: "top", horizontal: "center" }}
+                MenuListProps={{ "aria-label": "روابط إضافية" }}
+                slotProps={{ paper: { sx: { minWidth: 230, mt: 0.5, borderRadius: 3 } } }}
+              >
+                {DESKTOP_MORE_ITEMS.map((item) => {
+                  const active = isActivePath(pathname, item.to);
+                  const Icon = item.icon;
+                  return (
+                    <MenuItem
+                      key={item.to}
+                      component={RouterLink}
+                      to={item.to}
+                      selected={active}
+                      aria-current={active ? "page" : undefined}
+                      onClick={() => setMoreAnchor(null)}
+                      sx={{ gap: 1.5, py: 1.1 }}
+                    >
+                      <Icon fontSize="small" color={active ? "primary" : "inherit"} />
+                      <ListItemText
+                        primary={item.label}
+                        primaryTypographyProps={{ fontWeight: active ? 800 : 600 }}
+                      />
+                    </MenuItem>
+                  );
+                })}
+              </Menu>
             </Box>
           )}
 

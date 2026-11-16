@@ -40,6 +40,16 @@ const check = (name, fn) => {
     console.log(`FAIL  ${name} — ${error?.message ?? error}`);
   }
 };
+const checkAsync = async (name, fn) => {
+  try {
+    await fn();
+    results.push({ name, ok: true });
+    console.log(`PASS  ${name}`);
+  } catch (error) {
+    results.push({ name, ok: false, error: String(error?.message ?? error) });
+    console.log(`FAIL  ${name} — ${error?.message ?? error}`);
+  }
+};
 const eq = (actual, expected, label = "") => {
   if (actual !== expected) {
     throw new Error(`${label} المتوقّع: ${JSON.stringify(expected)} — الفعلي: ${JSON.stringify(actual)}`);
@@ -160,6 +170,89 @@ check("Overpass: استعلام آمن ومحدود", () => {
   ok(huge.includes("around:15000,"), "سقف نصف القطر");
   const tiny = mosques.buildOverpassQuery(AMMAN, 0);
   ok(tiny.includes("around:500,"), "حد أدنى لنصف القطر");
+});
+
+check("Overpass: خوادم عالمية فقط", () => {
+  const endpoints = mosques.OVERPASS_ENDPOINTS;
+  ok(Array.isArray(endpoints) && endpoints.length >= 2, "قائمة الخوادم");
+  ok(
+    endpoints.every((url) => url.startsWith("https://") && url.endsWith("/api/interpreter")),
+    "روابط HTTPS صحيحة",
+  );
+  ok(
+    !endpoints.some((url) => url.includes("overpass.osm.ch")),
+    "لا يُستخدم الخادم السويسري الإقليمي (يردّ فارغًا خارج سويسرا)",
+  );
+  ok(endpoints[0].includes("overpass-api.de"), "الخادم الرسمي أولًا");
+  ok(
+    endpoints.some((url) => url.includes("maps.mail.ru")),
+    "خادم عالمي احتياطي بلا حدود طلبات",
+  );
+});
+
+await checkAsync("Overpass: ردّ فارغ لا يمنع تجربة الخادم التالي", async () => {
+  const store = new Map();
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => store.set(key, value),
+    },
+  };
+  const realFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    if (calls.length === 1) {
+      return new Response(JSON.stringify({ elements: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return new Response(
+      JSON.stringify({
+        elements: [
+          {
+            type: "node",
+            id: 99,
+            lat: 31.96,
+            lon: 35.92,
+            tags: { building: "mosque", "name:ar": "مسجد الاختبار" },
+          },
+        ],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  try {
+    const result = await mosques.searchMosques(AMMAN, 3, { force: true });
+    eq(result.mosques.length, 1, "نتيجة من الخادم الثاني");
+    eq(result.mosques[0].name, "مسجد الاختبار");
+    eq(calls.length, 2, "عدد الطلبات بعد الردّ الفارغ");
+  } finally {
+    globalThis.fetch = realFetch;
+    delete globalThis.window;
+  }
+});
+
+check("Overpass: لا تُستخدم نتيجة فارغة مخزّنة", () => {
+  const store = new Map();
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => store.get(key) ?? null,
+      setItem: (key, value) => store.set(key, value),
+    },
+  };
+  try {
+    store.set(
+      "sj-mosques-cache-v2",
+      JSON.stringify({
+        "m:31.954:35.911:3": { at: Date.now(), mosques: [] },
+      }),
+    );
+    eq(mosques.readCachedMosques(AMMAN, 3), null, "النتيجة الفارغة تُعامل كعدم وجود ذاكرة");
+  } finally {
+    delete globalThis.window;
+  }
 });
 
 check("Overpass: تحويل النتائج وترتيبها وتنقيتها", () => {

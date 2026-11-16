@@ -69,13 +69,22 @@ export function describeMosqueError(error: unknown): string {
   return "حدث خطأ غير متوقّع أثناء البحث عن المساجد.";
 }
 
-const OVERPASS_ENDPOINTS = [
+/**
+ * خوادم Overpass العامة ذات التغطية العالمية فقط، مرتّبة حسب الاستجابة.
+ * لا نرسل الطلب إلا بضغطة المستخدم، ونجرّب البديل التالي عند فشل السابق.
+ *
+ * تنبيه: لا تُضَف خوادم إقليمية مثل `overpass.osm.ch` (سويسرا فقط)؛ فهي تردّ
+ * بنجاح وقائمة فارغة خارج منطقتها، فتبدو النتيجة كأنه «لا توجد مساجد».
+ */
+export const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
 ];
 
 const ENDPOINT_TIMEOUT_MS = 10_000;
-const CACHE_KEY = "sj-mosques-cache-v1";
+// الإصدار ٢ يلغي نتائج «صفر مساجد» التي خزّنها الخادم الإقليمي السابق.
+const CACHE_KEY = "sj-mosques-cache-v2";
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const CACHE_STALE_MS = 45 * 24 * 60 * 60 * 1000;
 // نتيجة واحدة فقط: آخر بحث، وليس سجلًا زمنيًا للمواقع.
@@ -267,6 +276,8 @@ export function readCachedMosques(
 ): CacheEntry | null {
   const entry = readCache()[mosqueCacheKey(location, radiusKm)];
   if (!entry || Date.now() - entry.at > maxAgeMs) return null;
+  // لا نثق بنتيجة فارغة مخزّنة: قد تكون من خادم إقليمي أو تغطية ناقصة.
+  if (entry.mosques.length === 0) return null;
   return entry;
 }
 
@@ -329,6 +340,7 @@ export async function searchMosques(
 
   const query = buildOverpassQuery(location, radiusKm);
   let lastError: unknown = null;
+  let emptyResult: Mosque[] | null = null;
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
     const controller = new AbortController();
@@ -336,14 +348,23 @@ export async function searchMosques(
     try {
       const payload = await fetchFromEndpoint(endpoint, query, controller.signal);
       const mosques = parseOverpassPayload(payload, location);
-      putCache(location, radiusKm, mosques);
-      return { mosques, source: "network", stale: false, fetchedAt: Date.now() };
+      if (mosques.length > 0) {
+        putCache(location, radiusKm, mosques);
+        return { mosques, source: "network", stale: false, fetchedAt: Date.now() };
+      }
+      // ردّ ناجح لكنه فارغ قد يأتي من نسخة ناقصة التغطية؛ نجرّب البديل التالي
+      // قبل الحكم بعدم وجود مساجد. ولا نخزّن نتيجة فارغة كي لا تلتصق بالمستخدم.
+      emptyResult = mosques;
     } catch (error) {
       // نجرّب الخادم البديل أيضًا عند 429/المهلة/الخطأ الشبكي.
       lastError = error;
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  if (emptyResult) {
+    return { mosques: emptyResult, source: "network", stale: false, fetchedAt: Date.now() };
   }
 
   const stale = readCachedMosques(location, radiusKm, CACHE_STALE_MS);

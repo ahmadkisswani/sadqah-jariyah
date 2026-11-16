@@ -36,7 +36,7 @@ useMosques.search()  ── ضغط صريح فقط
 buildOverpassQuery(موقع مقرّب، نصف قطر)
         │
         ▼
-Overpass API (overpass-api.de ثم kumi.systems)
+Overpass API (خوادم عالمية بالتتابع: overpass-api.de ثم maps.mail.ru ثم private.coffee)
         │
         ▼
 parseOverpassPayload() → تنقية/ترتيب/إزالة تكرار
@@ -67,12 +67,15 @@ out center 80;
 - نصف القطر: ١/٣/٥/١٠ كم، ويُقيّد بين ٠٫٥ و١٥ كم.
 - الحد الأقصى ٨٠ نتيجة.
 - الإحداثيات تُقرّب إلى ٥ منازل عشرية في الاستعلام.
-- المهلة: ٢٥ ثانية على الخدمة، و١٠ ثوانٍ لكل خادم على العميل (خادمان بالتتابع).
+- المهلة: ٢٥ ثانية على الخدمة، و١٠ ثوانٍ لكل خادم على العميل (ثلاثة خوادم بالتتابع).
 
-الخادمان المستخدمان بالترتيب:
+الخوادم المستخدمة بالترتيب (كلها ذات تغطية عالمية):
 
-1. `https://overpass-api.de/api/interpreter`
-2. `https://overpass.kumi.systems/api/interpreter`
+1. `https://overpass-api.de/api/interpreter` — الخادم الرسمي.
+2. `https://maps.mail.ru/osm/tools/overpass/api/interpreter` — خادم عالمي بلا حدّ طلبات معلن.
+3. `https://overpass.private.coffee/api/interpreter` — خادم عالمي بلا حدّ طلبات معلن (خلف kumi.systems سابقًا).
+
+**لا تُستخدم الخوادم الإقليمية** مثل `overpass.osm.ch` (سويسرا فقط) أو خوادم Britain/Ireland؛ لأنها تردّ بنجاح وقائمة فارغة خارج منطقتها، فيظهر للمستخدم «لا توجد مساجد» بدل رسالة خطأ. وإذا نجح خادم بردّ فارغ، يجرّب التطبيق الخادم التالي قبل اعتماد الصفر، ولا يحفظ نتيجة فارغة في الذاكرة المحلية.
 
 ---
 
@@ -96,7 +99,7 @@ out center 80;
 
 | العنصر | القيمة |
 |---|---|
-| مفتاح التخزين | `sj-mosques-cache-v1` |
+| مفتاح التخزين | `sj-mosques-cache-v2` |
 | مفتاح الموقع | `m:${lat.toFixed(3)}:${lon.toFixed(3)}:${radius}` (≈١١٠ م) |
 | صلاحية العرض الحديث | ٧ أيام |
 | صلاحية النسخة الاحتياطية | ٤٥ يومًا |
@@ -104,6 +107,7 @@ out center 80;
 | ما يُحفظ | قائمة المساجد + وقت الجلب + مفتاح موقع مقرّب |
 
 - لا يُحفظ سجل بحث زمني؛ تُستبدل النتيجة السابقة عند بحث جديد.
+- لا تُحفظ نتيجة فارغة (صفر مساجد) كي لا تلتصق بالمستخدم بسبب خادم ناقص التغطية.
 - عند فشل التحديث تُعرض النسخة القديمة مع تنبيه `stale`، إن وُجدت.
 - زر «تحديث» يجبر طلبًا جديدًا (`force: true`).
 
@@ -158,7 +162,7 @@ out center 80;
 - المواقع الإلكترونية تُفحص لتقبل `http/https` فقط.
 - CSP يسمح فقط بـ:
   - `img-src`: `https://tile.openstreetmap.org` و`https://*.tile.openstreetmap.org`
-  - `connect-src`: `https://overpass-api.de` و`https://overpass.kumi.systems`
+  - `connect-src`: `https://overpass-api.de` و`https://maps.mail.ru` و`https://overpass.private.coffee`
 
 ---
 
@@ -183,6 +187,9 @@ out center 80;
   - الترتيب بالمسافة وإزالة التكرار.
   - تنظيف العنوان والهاتف والموقع.
   - روابط الاتجاهات وOpenStreetMap.
+  - قائمة خوادم عالمية فقط، وعدم استخدام خادم إقليمي.
+  - تخطّي الردّ الفارغ إلى الخادم التالي.
+  - عدم اعتماد نتيجة فارغة مخزّنة.
 - `scripts/smoke-test.mjs`:
   - لا طلب Overpass قبل الضغط.
   - اعتراض رد Overpass مُحاكى وعرض نتيجتين.

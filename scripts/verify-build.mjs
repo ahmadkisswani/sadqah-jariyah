@@ -125,6 +125,9 @@ const headers = exists("_headers") ? read("_headers") : "";
 check("رؤوس CSP", headers.includes("Content-Security-Policy"));
 check("CSP: بلاطات OpenStreetMap", headers.includes("tile.openstreetmap.org"));
 check("CSP: خدمة Overpass", headers.includes("overpass-api.de"));
+check("CSP: خادم Overpass الاحتياطي", headers.includes("maps.mail.ru"));
+check("CSP: خادم Overpass الثالث", headers.includes("overpass.private.coffee"));
+check("CSP: لا خادم إقليمي", !headers.includes("overpass.osm.ch"));
 check("رؤوس Permissions-Policy", headers.includes("Permissions-Policy"));
 check("wrangler.jsonc موجود", existsSync("wrangler.jsonc") && readFileSync("wrangler.jsonc", "utf8").includes('"ASSETS"'));
 

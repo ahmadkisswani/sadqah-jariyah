@@ -895,7 +895,7 @@ try {
   });
   await browser.evaluate(`(() => {
     localStorage.setItem("sj-prayer-settings", ${JSON.stringify(seedSettings)});
-    localStorage.removeItem("sj-mosques-cache-v1");
+    localStorage.removeItem("sj-mosques-cache-v2");
     localStorage.removeItem("sj-hijri-offset-v1");
     return true;
   })()`);
@@ -1035,6 +1035,11 @@ try {
   );
   check("لا يبدأ بحث المساجد تلقائيًا", overpassBefore === 0, `الطلبات: ${overpassBefore}`);
 
+  const mapBeforeSearch = await browser.evaluate(
+    `[...document.querySelectorAll("button")].some((button) => button.textContent.includes("عرض الخريطة"))`,
+  );
+  check("زر الخريطة متاح حتى قبل نجاح البحث", mapBeforeSearch);
+
   const mosquePayload = {
     elements: [
       {
@@ -1116,6 +1121,61 @@ try {
     mapWorks = false;
   }
   check("خريطة المساجد تُحمَّل كسولًا وتظهر", mapWorks);
+
+  // 15) سطح المكتب: شريط التنقل لا يلتف، والروابط الإضافية داخل قائمة «المزيد»
+  await browser.send("Emulation.setDeviceMetricsOverride", {
+    width: 1440,
+    height: 900,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await browser.send("Page.navigate", { url: `${BASE_URL}/` });
+  let desktopHeader = null;
+  try {
+    await browser.waitFor(`!!document.querySelector('nav[aria-label="التنقل الرئيسي"]')`, {
+      timeoutMs: 15_000,
+      label: "تنقل سطح المكتب",
+    });
+    desktopHeader = await browser.evaluate(`(() => {
+      const header = document.querySelector("header");
+      const nav = document.querySelector('nav[aria-label="التنقل الرئيسي"]');
+      const buttons = nav ? [...nav.querySelectorAll("a, button")] : [];
+      return {
+        headerHeight: header ? Math.round(header.getBoundingClientRect().height) : 0,
+        rows: new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size,
+        labels: buttons.map((button) => (button.textContent || "").trim()),
+      };
+    })()`);
+  } catch {
+    desktopHeader = null;
+  }
+  check(
+    "شريط سطح المكتب في صف واحد وبلا ازدحام",
+    !!desktopHeader &&
+      desktopHeader.headerHeight <= 80 &&
+      desktopHeader.rows === 1 &&
+      desktopHeader.labels.includes("المزيد") &&
+      desktopHeader.labels.length === 7,
+    JSON.stringify(desktopHeader),
+  );
+
+  let moreMenu = false;
+  try {
+    await browser.evaluate(`(() => {
+      const button = [...document.querySelectorAll('nav[aria-label="التنقل الرئيسي"] button')]
+        .find((item) => item.textContent.includes("المزيد"));
+      button?.click();
+      return !!button;
+    })()`);
+    await browser.waitFor(
+      `document.querySelector('[role="menu"]')?.innerText.includes("التقويم الهجري") === true`,
+      { timeoutMs: 5_000, label: "قائمة المزيد" },
+    );
+    moreMenu = true;
+  } catch {
+    moreMenu = false;
+  }
+  check("قائمة «المزيد» تعرض الروابط الإضافية", moreMenu);
 } catch (error) {
   check("اكتمل الاختبار بلا أخطاء تنفيذية", false, String(error.message ?? error));
   if (pageErrors.length > 0) {

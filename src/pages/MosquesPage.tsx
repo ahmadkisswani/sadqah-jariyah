@@ -242,11 +242,12 @@ export default function MosquesPage() {
                   {copy.refresh}
                 </Button>
               ) : null}
-              {mosques.length > 0 ? (
+              {location ? (
                 <Button
                   variant="outlined"
                   startIcon={<MapIcon />}
                   onClick={() => setMapVisible((value) => !value)}
+                  aria-pressed={mapVisible}
                 >
                   {mapVisible ? copy.hideMap : copy.showMap}
                 </Button>
@@ -311,7 +312,7 @@ export default function MosquesPage() {
         </Stack>
       ) : null}
 
-      {mapVisible && location && mosques.length > 0 ? (
+      {mapVisible && location ? (
         <Suspense fallback={<Skeleton variant="rounded" height={360} />}>
           <MosqueMap
             user={location}

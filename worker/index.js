@@ -16,7 +16,7 @@ const CONTENT_SECURITY_POLICY = [
   "manifest-src 'self'",
   "worker-src 'self'",
   "media-src 'self' blob: data: https://cdn.islamic.network",
-  "connect-src 'self' https://api.aladhan.com https://api.bigdatacloud.net https://cdn.islamic.network https://overpass-api.de https://overpass.kumi.systems",
+  "connect-src 'self' https://api.aladhan.com https://api.bigdatacloud.net https://cdn.islamic.network https://overpass-api.de https://maps.mail.ru https://overpass.private.coffee",
   "frame-src https://www.tvquran.com https://*.tvquran.com",
   "upgrade-insecure-requests",
 ].join("; ");
