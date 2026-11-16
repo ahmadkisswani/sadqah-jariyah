@@ -146,10 +146,9 @@ class Cdp {
     });
     if (result.exceptionDetails) {
       const exception = result.exceptionDetails.exception;
+      const description = exception?.description ?? exception?.value ?? result.exceptionDetails.text;
       throw new Error(
-        `فشل التقييم: ${
-          exception?.description ?? exception?.value ?? result.exceptionDetails.text
-        }`,
+        `فشل التقييم: ${String(description).split("\n")[0]} — التعبير: ${String(expression).slice(0, 160)}`,
       );
     }
     return result.result.value;
@@ -1161,17 +1160,31 @@ try {
 
   let moreMenu = false;
   try {
-    await browser.evaluate(`(() => {
+    const findMoreButton = `(() => {
       const button = [...document.querySelectorAll('nav[aria-label="التنقل الرئيسي"] button')]
-        .find((item) => item.textContent.includes("المزيد"));
-      button?.click();
+        .find((item) => (item.textContent || "").includes("المزيد"));
+      if (!button) return false;
+      button.click();
+      return true;
+    })()`;
+    await browser.waitFor(`(() => {
+      const button = [...document.querySelectorAll('nav[aria-label="التنقل الرئيسي"] button')]
+        .find((item) => (item.textContent || "").includes("المزيد"));
       return !!button;
-    })()`);
-    await browser.waitFor(
-      `document.querySelector('[role="menu"]')?.innerText.includes("التقويم الهجري") === true`,
-      { timeoutMs: 5_000, label: "قائمة المزيد" },
-    );
-    moreMenu = true;
+    })()`, { timeoutMs: 10_000, label: "زر المزيد" });
+    // نكرّر المحاولة: قد يصل النقر قبل أن يتفاعل React بعد التحميل.
+    for (let attempt = 0; attempt < 3 && !moreMenu; attempt += 1) {
+      await browser.evaluate(findMoreButton);
+      try {
+        await browser.waitFor(
+          `(document.querySelector('[role="menu"]')?.innerText ?? "").includes("التقويم الهجري") === true`,
+          { timeoutMs: 3_000, label: "قائمة المزيد" },
+        );
+        moreMenu = true;
+      } catch {
+        moreMenu = false;
+      }
+    }
   } catch {
     moreMenu = false;
   }
